@@ -1333,7 +1333,6 @@ _cmd_uninstall() {
             # 重新加载 shell 配置
             # shellcheck source=/dev/null
             source "$shell_rc" 2>/dev/null || true
-            unset -f pyvenv 2>/dev/null || true
             ;;
         2)
             if [[ "$count" -gt 0 ]]; then
@@ -1370,7 +1369,6 @@ _cmd_uninstall() {
             # 重新加载 shell 配置
             # shellcheck source=/dev/null
             source "$shell_rc" 2>/dev/null || true
-            unset -f pyvenv 2>/dev/null || true
             ;;
         *)
             _warn "$(_t cancelled)"
@@ -1580,7 +1578,6 @@ _do_curl_uninstall() {
     # 重新加载 shell 配置
     # shellcheck source=/dev/null
     source "$shell_rc" 2>/dev/null || true
-    unset -f pyvenv 2>/dev/null || true
 }
 
 # ======================== 自动补全 ========================
