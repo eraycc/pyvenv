@@ -170,6 +170,14 @@ L[cn,backup_empty]="暂无备份文件"
 L[en,backup_empty]="No backup files found"
 L[cn,backup_invalid]="无效的备份文件"
 L[en,backup_invalid]="Invalid backup file"
+L[cn,backup_not_found]="备份文件不存在"
+L[en,backup_not_found]="Backup file not found"
+L[cn,backup_removing]="正在删除备份"
+L[en,backup_removing]="Removing backup"
+L[cn,backup_removed]="备份已删除"
+L[en,backup_removed]="Backup removed"
+L[cn,backup_count]="共 %d 个备份"
+L[en,backup_count]="%d backup(s)"
 L[cn,restore_starting]="正在还原环境"
 L[en,restore_starting]="Restoring environment"
 L[cn,restore_done]="环境还原完成"
@@ -182,6 +190,10 @@ L[cn,confirm_remove]="确定要删除环境 '%s' 吗？此操作不可撤销。"
 L[en,confirm_remove]="Are you sure you want to remove '%s'? This cannot be undone."
 L[cn,confirm_remove_all]="⚠️  警告：即将删除所有 %d 个虚拟环境！"
 L[en,confirm_remove_all]="⚠️  Warning: About to remove all %d virtual environment(s)!"
+L[cn,confirm_remove_backup]="确定要删除备份 '%s' 吗？"
+L[en,confirm_remove_backup]="Are you sure you want to remove backup '%s'?"
+L[cn,confirm_remove_all_backups]="⚠️  警告：即将删除所有 %d 个备份文件！"
+L[en,confirm_remove_all_backups]="⚠️  Warning: About to remove all %d backup file(s)!"
 L[cn,confirm_reset]="确定要重置环境 '%s' 吗？这将删除所有已安装的包（保留 pip）。"
 L[en,confirm_reset]="Reset '%s'? This will remove all installed packages (keeping pip)."
 L[cn,confirm_type_yes]="请输入 'yes' 确认"
@@ -218,6 +230,8 @@ L[cn,err_run_no_cmd]="请指定要运行的命令"
 L[en,err_run_no_cmd]="Please specify a command to run"
 L[cn,err_download_failed]="下载失败，请检查网络连接"
 L[en,err_download_failed]="Download failed. Please check your network connection"
+L[cn,err_no_backup_name]="请指定备份文件名"
+L[en,err_no_backup_name]="Please specify a backup file name"
 
 # ---- 语言设置 ----
 L[cn,lang_current]="当前语言"
@@ -238,12 +252,10 @@ L[cn,install_downloading]="正在下载脚本..."
 L[en,install_downloading]="Downloading script..."
 L[cn,install_configuring]="正在配置..."
 L[en,install_configuring]="Configuring..."
-L[cn,install_success]="✅ pyvenv 安装成功！"
-L[en,install_success]="✅ pyvenv installed successfully!"
-L[cn,install_activated]="配置已自动生效。"
-L[en,install_activated]="Configuration has been applied."
-L[cn,install_manual_hint]="如果命令未生效，请运行以下命令或打开新终端窗口："
-L[en,install_manual_hint]="If the command doesn't work, run the following or open a new terminal:"
+L[cn,install_success]="pyvenv 安装成功！"
+L[en,install_success]="pyvenv installed successfully!"
+L[cn,install_ready]="pyvenv 已就绪，现在可以使用了。"
+L[en,install_ready]="pyvenv is ready to use."
 L[cn,install_try_now]="现在可以尝试："
 L[en,install_try_now]="You can now try:"
 L[cn,install_already]="pyvenv 已经安装。如需重新安装，请先卸载。"
@@ -265,16 +277,16 @@ L[cn,uninstall_select]="请输入选项 [1-3]"
 L[en,uninstall_select]="Enter option [1-3]"
 L[cn,uninstall_removing]="正在卸载 pyvenv..."
 L[en,uninstall_removing]="Uninstalling pyvenv..."
-L[cn,uninstall_done]="✅ pyvenv 已卸载"
-L[en,uninstall_done]="✅ pyvenv has been uninstalled"
+L[cn,uninstall_done]="pyvenv 已卸载"
+L[en,uninstall_done]="pyvenv has been uninstalled"
 L[cn,uninstall_env_kept]="虚拟环境目录已保留"
 L[en,uninstall_env_kept]="Environment directory has been kept"
 L[cn,uninstall_all_removed]="所有文件已清理完毕"
 L[en,uninstall_all_removed]="All files have been removed"
 L[cn,uninstall_hint]="如需重新安装，请运行："
 L[en,uninstall_hint]="To reinstall, run:"
-L[cn,uninstall_restart_hint]="请重新打开终端或运行以下命令使卸载完全生效："
-L[en,uninstall_restart_hint]="Please reopen terminal or run the following to complete uninstall:"
+L[cn,uninstall_complete]="卸载完成。pyvenv 命令已移除。"
+L[en,uninstall_complete]="Uninstall complete. pyvenv command has been removed."
 
 # ---- 帮助信息 ----
 L[cn,help_header]="pyvenv - Python 虚拟环境管理器"
@@ -328,6 +340,10 @@ L[cn,help_cmd_backups]="列出所有备份文件"
 L[en,help_cmd_backups]="List all backup files"
 L[cn,help_cmd_restore]="从备份文件还原虚拟环境"
 L[en,help_cmd_restore]="Restore a virtual environment from backup"
+L[cn,help_cmd_rm_backup]="删除指定的备份文件"
+L[en,help_cmd_rm_backup]="Remove a backup file"
+L[cn,help_cmd_rm_all_backups]="删除所有备份文件"
+L[en,help_cmd_rm_all_backups]="Remove all backup files"
 L[cn,help_cmd_lang]="设置界面语言（cn/en）"
 L[en,help_cmd_lang]="Set interface language (cn/en)"
 L[cn,help_cmd_uninstall]="卸载 pyvenv"
@@ -365,7 +381,7 @@ L[cn,version_author]="Python 虚拟环境管理器"
 L[en,version_author]="Python Virtual Environment Manager"
 
 # ======================== 版本号 ========================
-PYVENV_VERSION="1.0.0"
+PYVENV_VERSION="1.1.0"
 
 # ======================== 颜色与格式 ========================
 if [[ -t 1 ]]; then
@@ -480,6 +496,22 @@ _env_pkg_count() {
 # 获取环境大小
 _env_size() {
     du -sh "$PYVENV_ENV_DIR/$1" 2>/dev/null | cut -f1 || echo "-"
+}
+
+# 列出所有备份文件
+_list_backups() {
+    for f in "$PYVENV_BACKUP_DIR"/*.tar.gz; do
+        [[ -f "$f" ]] && basename "$f"
+    done
+}
+
+# 获取备份数量
+_backup_count() {
+    local count=0
+    for f in "$PYVENV_BACKUP_DIR"/*.tar.gz; do
+        [[ -f "$f" ]] && ((count++))
+    done
+    echo "$count"
 }
 
 # 确认（y/N）
@@ -974,25 +1006,89 @@ _cmd_backup() {
 
 # 列出备份
 _cmd_backups() {
+    local count=$(_backup_count)
+    
     _echo ""
-    _echo "${C_BOLD}$(_t backup_list_title)${C_RESET}"
+    _echo "${C_BOLD}$(_t backup_list_title)${C_RESET}  ${C_DIM}$PYVENV_BACKUP_DIR${C_RESET}"
     _echo ""
     
-    local found=0
+    if [[ "$count" -eq 0 ]]; then
+        _warn "$(_t backup_empty)"
+        _echo ""
+        return 0
+    fi
+    
     for f in "$PYVENV_BACKUP_DIR"/*.tar.gz; do
         [[ -f "$f" ]] || continue
-        found=1
         local fname=$(basename "$f")
         local fsize=$(du -h "$f" 2>/dev/null | cut -f1)
         local fdate=$(stat -c %y "$f" 2>/dev/null | cut -d' ' -f1 || stat -f %Sm -t %Y-%m-%d "$f" 2>/dev/null)
         _echo "  ${C_CYAN}•${C_RESET} $fname  ${C_DIM}($fsize, $fdate)${C_RESET}"
     done
     
-    if [[ $found -eq 0 ]]; then
+    _echo ""
+    _dim "  $(_tf backup_count "$count")"
+    _echo ""
+}
+
+# 删除单个备份
+_cmd_rm_backup() {
+    local backup_name="$1"
+    
+    if [[ -z "$backup_name" ]]; then
+        _error "$(_t err_no_backup_name)"
+        _echo "  $(_t usage): pyvenv rm-backup <$(_t file)>"
+        return 1
+    fi
+    
+    # 补全 .tar.gz 后缀
+    [[ "$backup_name" != *.tar.gz ]] && backup_name="${backup_name}.tar.gz"
+    
+    local backup_file="$PYVENV_BACKUP_DIR/$backup_name"
+    
+    if [[ ! -f "$backup_file" ]]; then
+        _error "$(_t backup_not_found): $backup_name"
+        return 1
+    fi
+    
+    if ! _confirm "$(_tf confirm_remove_backup "$backup_name") $(_t confirm_yn)"; then
+        _warn "$(_t cancelled)"
+        return 0
+    fi
+    
+    rm -f "$backup_file"
+    _success "$(_t backup_removed): ${C_CYAN}$backup_name${C_RESET}"
+}
+
+# 删除所有备份
+_cmd_rm_all_backups() {
+    local count=$(_backup_count)
+    
+    if [[ "$count" -eq 0 ]]; then
         _warn "$(_t backup_empty)"
+        return 0
     fi
     
     _echo ""
+    _warn "$(_tf confirm_remove_all_backups "$count")"
+    _echo ""
+    
+    for f in "$PYVENV_BACKUP_DIR"/*.tar.gz; do
+        [[ -f "$f" ]] && _echo "  ${C_RED}•${C_RESET} $(basename "$f")"
+    done
+    
+    _echo ""
+    
+    if ! _confirm_yes "$(_t confirm_type_yes): "; then
+        _warn "$(_t cancelled)"
+        return 0
+    fi
+    
+    for f in "$PYVENV_BACKUP_DIR"/*.tar.gz; do
+        [[ -f "$f" ]] || continue
+        rm -f "$f"
+        _success "$(_t backup_removed): $(basename "$f")"
+    done
 }
 
 # 还原备份
@@ -1004,6 +1100,9 @@ _cmd_restore() {
         _echo "  $(_t usage): pyvenv restore <$(_t file)>"
         return 1
     fi
+    
+    # 补全 .tar.gz 后缀
+    [[ "$backup_file" != *.tar.gz ]] && backup_file="${backup_file}.tar.gz"
     
     # 如果只给了文件名，在备份目录中查找
     if [[ ! -f "$backup_file" && -f "$PYVENV_BACKUP_DIR/$backup_file" ]]; then
@@ -1072,6 +1171,7 @@ _cmd_lang() {
 # 卸载
 _cmd_uninstall() {
     local count=$(_env_count)
+    local shell_rc=$(_get_shell_rc)
     
     _echo ""
     _echo "${C_BOLD}$(_t uninstall_title)${C_RESET}"
@@ -1096,12 +1196,14 @@ _cmd_uninstall() {
             _success "$(_t uninstall_done)"
             _echo "  $(_t uninstall_env_kept): ${C_DIM}$PYVENV_ENV_DIR${C_RESET}"
             _echo ""
-            _echo "$(_t uninstall_restart_hint)"
-            _echo "  ${C_CYAN}source $(_get_shell_rc)${C_RESET}"
-            _echo ""
             _echo "$(_t uninstall_hint)"
             _echo "  ${C_DIM}curl -fsSL https://raw.githubusercontent.com/eraycc/pyvenv/main/pyvenv.sh | bash -s -- install${C_RESET}"
             _echo ""
+            _success "$(_t uninstall_complete)"
+            _echo ""
+            # 重新加载 shell 配置
+            # shellcheck source=/dev/null
+            source "$shell_rc" 2>/dev/null || true
             ;;
         2)
             if [[ "$count" -gt 0 ]]; then
@@ -1130,9 +1232,14 @@ _cmd_uninstall() {
             _success "$(_t uninstall_done)"
             _success "$(_t uninstall_all_removed)"
             _echo ""
-            _echo "$(_t uninstall_restart_hint)"
-            _echo "  ${C_CYAN}source $(_get_shell_rc)${C_RESET}"
+            _echo "$(_t uninstall_hint)"
+            _echo "  ${C_DIM}curl -fsSL https://raw.githubusercontent.com/eraycc/pyvenv/main/pyvenv.sh | bash -s -- install${C_RESET}"
             _echo ""
+            _success "$(_t uninstall_complete)"
+            _echo ""
+            # 重新加载 shell 配置
+            # shellcheck source=/dev/null
+            source "$shell_rc" 2>/dev/null || true
             ;;
         *)
             _warn "$(_t cancelled)"
@@ -1148,13 +1255,16 @@ _do_uninstall_manager() {
     if [[ -f "$shell_rc" ]]; then
         local tmp_file="${shell_rc}.pyvenv.tmp"
         grep -v '\.pyvenv/pyvenv\.sh' "$shell_rc" > "$tmp_file" 2>/dev/null && mv "$tmp_file" "$shell_rc"
-        # 清理可能的空行
+        # 清理可能的空行和注释
         sed -i.bak '/^# pyvenv/d' "$shell_rc" 2>/dev/null || sed -i '' '/^# pyvenv/d' "$shell_rc" 2>/dev/null
         rm -f "${shell_rc}.bak" 2>/dev/null
     fi
     
     # 删除配置目录
     rm -rf "$PYVENV_HOME"
+    
+    # 取消函数定义
+    unset -f pyvenv 2>/dev/null || true
 }
 
 # 帮助信息
@@ -1168,39 +1278,41 @@ _cmd_help() {
     _echo ""
     
     _echo "  ${C_YELLOW}$(_t help_section_basic)${C_RESET}"
-    _echo "    ${C_CYAN}list, ls${C_RESET}                 $(_t help_cmd_list)"
-    _echo "    ${C_CYAN}new, add${C_RESET} <name>          $(_t help_cmd_new)"
-    _echo "    ${C_CYAN}use, on${C_RESET} <name>           $(_t help_cmd_use)"
-    _echo "    ${C_CYAN}off, quit, exit${C_RESET}          $(_t help_cmd_off)"
+    _echo "    ${C_CYAN}list, ls${C_RESET}                    $(_t help_cmd_list)"
+    _echo "    ${C_CYAN}new, add${C_RESET} <name>             $(_t help_cmd_new)"
+    _echo "    ${C_CYAN}use, on${C_RESET} <name>              $(_t help_cmd_use)"
+    _echo "    ${C_CYAN}off, quit, exit${C_RESET}             $(_t help_cmd_off)"
     _echo ""
     
     _echo "  ${C_YELLOW}$(_t help_section_manage)${C_RESET}"
-    _echo "    ${C_CYAN}create${C_RESET} <name>            $(_t help_cmd_create)"
-    _echo "    ${C_CYAN}rm, remove${C_RESET} <name>        $(_t help_cmd_rm)"
-    _echo "    ${C_CYAN}rm-all${C_RESET}                   $(_t help_cmd_rm_all)"
-    _echo "    ${C_CYAN}cp, copy${C_RESET} <src> <dst>     $(_t help_cmd_cp)"
-    _echo "    ${C_CYAN}mv, rename${C_RESET} <old> <new>   $(_t help_cmd_mv)"
-    _echo "    ${C_CYAN}reset${C_RESET} [name]             $(_t help_cmd_reset)"
-    _echo "    ${C_CYAN}info${C_RESET} [name]              $(_t help_cmd_info)"
-    _echo "    ${C_CYAN}where${C_RESET} [name]             $(_t help_cmd_where)"
-    _echo "    ${C_CYAN}run${C_RESET} <name> -- <cmd>      $(_t help_cmd_run)"
+    _echo "    ${C_CYAN}create${C_RESET} <name>               $(_t help_cmd_create)"
+    _echo "    ${C_CYAN}rm, remove${C_RESET} <name>           $(_t help_cmd_rm)"
+    _echo "    ${C_CYAN}rm-all${C_RESET}                      $(_t help_cmd_rm_all)"
+    _echo "    ${C_CYAN}cp, copy${C_RESET} <src> <dst>        $(_t help_cmd_cp)"
+    _echo "    ${C_CYAN}mv, rename${C_RESET} <old> <new>      $(_t help_cmd_mv)"
+    _echo "    ${C_CYAN}reset${C_RESET} [name]                $(_t help_cmd_reset)"
+    _echo "    ${C_CYAN}info${C_RESET} [name]                 $(_t help_cmd_info)"
+    _echo "    ${C_CYAN}where${C_RESET} [name]                $(_t help_cmd_where)"
+    _echo "    ${C_CYAN}run${C_RESET} <name> -- <cmd>         $(_t help_cmd_run)"
     _echo ""
     
     _echo "  ${C_YELLOW}$(_t help_section_package)${C_RESET}"
-    _echo "    ${C_CYAN}update, upgrade${C_RESET}          $(_t help_cmd_update)"
+    _echo "    ${C_CYAN}update, upgrade${C_RESET}             $(_t help_cmd_update)"
     _echo ""
     
     _echo "  ${C_YELLOW}$(_t help_section_backup)${C_RESET}"
-    _echo "    ${C_CYAN}backup${C_RESET} [name]            $(_t help_cmd_backup)"
-    _echo "    ${C_CYAN}backups${C_RESET}                  $(_t help_cmd_backups)"
-    _echo "    ${C_CYAN}restore${C_RESET} <file>           $(_t help_cmd_restore)"
+    _echo "    ${C_CYAN}backup${C_RESET} [name]               $(_t help_cmd_backup)"
+    _echo "    ${C_CYAN}backups${C_RESET}                     $(_t help_cmd_backups)"
+    _echo "    ${C_CYAN}restore, recover${C_RESET} <file>     $(_t help_cmd_restore)"
+    _echo "    ${C_CYAN}rm-backup${C_RESET} <file>            $(_t help_cmd_rm_backup)"
+    _echo "    ${C_CYAN}rm-all-backups${C_RESET}              $(_t help_cmd_rm_all_backups)"
     _echo ""
     
     _echo "  ${C_YELLOW}$(_t help_section_other)${C_RESET}"
-    _echo "    ${C_CYAN}lang${C_RESET} [cn|en]             $(_t help_cmd_lang)"
-    _echo "    ${C_CYAN}uninstall${C_RESET}                $(_t help_cmd_uninstall)"
-    _echo "    ${C_CYAN}help, -h${C_RESET}                 $(_t help_cmd_help)"
-    _echo "    ${C_CYAN}version, -v${C_RESET}              $(_t help_cmd_version)"
+    _echo "    ${C_CYAN}lang${C_RESET} [cn|en]                $(_t help_cmd_lang)"
+    _echo "    ${C_CYAN}uninstall${C_RESET}                   $(_t help_cmd_uninstall)"
+    _echo "    ${C_CYAN}help, -h${C_RESET}                    $(_t help_cmd_help)"
+    _echo "    ${C_CYAN}version, -v${C_RESET}                 $(_t help_cmd_version)"
     _echo ""
     
     _echo "${C_BOLD}$(_t help_examples)${C_RESET}"
@@ -1217,8 +1329,8 @@ _cmd_help() {
     
     _echo "${C_BOLD}$(_t help_dirs)${C_RESET}"
     _echo ""
-    _echo "  ${C_CYAN}~/pyvenv/${C_RESET}       $(_t help_dir_envs)"
-    _echo "  ${C_CYAN}~/.pyvenv/${C_RESET}      $(_t help_dir_config)"
+    _echo "  ${C_CYAN}~/pyvenv/${C_RESET}        $(_t help_dir_envs)"
+    _echo "  ${C_CYAN}~/.pyvenv/${C_RESET}       $(_t help_dir_config)"
     _echo ""
 }
 
@@ -1296,16 +1408,11 @@ EOF
     _success "$(_t install_success)"
     _echo ""
     
-    # 尝试自动加载
+    # 重新加载 shell 配置使其立即生效
     # shellcheck source=/dev/null
-    source "$PYVENV_SCRIPT" 2>/dev/null && {
-        _success "$(_t install_activated)"
-    } || {
-        _echo "$(_t install_manual_hint)"
-        _echo ""
-        _echo "  ${C_CYAN}source $shell_rc${C_RESET}"
-    }
+    source "$shell_rc" 2>/dev/null
     
+    _success "$(_t install_ready)"
     _echo ""
     _echo "$(_t install_try_now)"
     _echo ""
@@ -1320,6 +1427,8 @@ _do_curl_uninstall() {
     [[ -f "$PYVENV_CONFIG" ]] && source "$PYVENV_CONFIG" 2>/dev/null
     PYVENV_LANG="${PYVENV_LANG:-cn}"
     
+    local shell_rc=$(_get_shell_rc)
+    
     _echo ""
     _info "$(_t uninstall_removing)"
     
@@ -1329,6 +1438,12 @@ _do_curl_uninstall() {
     _success "$(_t uninstall_done)"
     _echo "  $(_t uninstall_env_kept): ${C_DIM}$PYVENV_ENV_DIR${C_RESET}"
     _echo ""
+    _success "$(_t uninstall_complete)"
+    _echo ""
+    
+    # 重新加载 shell 配置
+    # shellcheck source=/dev/null
+    source "$shell_rc" 2>/dev/null || true
 }
 
 # ======================== 自动补全 ========================
@@ -1337,7 +1452,7 @@ _pyvenv_completions() {
     local cur="${COMP_WORDS[COMP_CWORD]}"
     local prev="${COMP_WORDS[COMP_CWORD-1]}"
     
-    local commands="list ls new add create use on off quit exit deactivate rm remove rm-all cp copy mv rename reset info where run update upgrade backup backups restore lang language uninstall help version"
+    local commands="list ls new add create use on off quit exit deactivate rm remove rm-all cp copy mv rename reset info where run update upgrade backup backups restore recover rm-backup rm-all-backups lang language uninstall help version"
     
     if [[ $COMP_CWORD -eq 1 ]]; then
         COMPREPLY=($(compgen -W "$commands" -- "$cur"))
@@ -1352,8 +1467,8 @@ _pyvenv_completions() {
         lang|language)
             COMPREPLY=($(compgen -W "cn en" -- "$cur"))
             ;;
-        restore)
-            local backups=$(ls "$PYVENV_BACKUP_DIR"/*.tar.gz 2>/dev/null | xargs -n1 basename 2>/dev/null | tr '\n' ' ')
+        restore|recover|rm-backup)
+            local backups=$(_list_backups 2>/dev/null | tr '\n' ' ')
             COMPREPLY=($(compgen -W "$backups" -- "$cur"))
             ;;
     esac
@@ -1367,35 +1482,39 @@ pyvenv() {
     
     case "$cmd" in
         # 基础命令
-        list|ls)                    _cmd_list ;;
-        new|add)                    _cmd_new "$@" ;;
-        create)                     _cmd_create "$@" ;;
-        use|on|activate|workon)     _cmd_use "$@" ;;
-        off|quit|exit|deactivate)   _cmd_off ;;
+        list|ls)                           _cmd_list ;;
+        new|add)                           _cmd_new "$@" ;;
+        create)                            _cmd_create "$@" ;;
+        use|on|activate|workon)            _cmd_use "$@" ;;
+        off|quit|exit|deactivate)          _cmd_off ;;
         
         # 环境管理
-        rm|remove|delete)           _cmd_rm "$@" ;;
-        rm-all|remove-all)          _cmd_rm_all ;;
-        cp|copy|clone)              _cmd_cp "$@" ;;
-        mv|rename)                  _cmd_mv "$@" ;;
-        reset)                      _cmd_reset "$@" ;;
-        info)                       _cmd_info "$@" ;;
-        where|whereis|path)         _cmd_where "$@" ;;
-        run)                        _cmd_run "$@" ;;
+        rm|remove|delete)                  _cmd_rm "$@" ;;
+        rm-all|remove-all|delete-all)      _cmd_rm_all ;;
+        cp|copy|clone)                     _cmd_cp "$@" ;;
+        mv|rename)                         _cmd_mv "$@" ;;
+        reset)                             _cmd_reset "$@" ;;
+        info)                              _cmd_info "$@" ;;
+        where|whereis|path)                _cmd_where "$@" ;;
+        run)                               _cmd_run "$@" ;;
         
         # 包管理
-        update|upgrade)             _cmd_update ;;
+        update|upgrade)                    _cmd_update ;;
         
         # 备份还原
-        backup)                     _cmd_backup "$@" ;;
-        backups|backup-list)        _cmd_backups ;;
-        restore)                    _cmd_restore "$@" ;;
+        backup)                            _cmd_backup "$@" ;;
+        backups|backup-list)               _cmd_backups ;;
+        restore|recover)                   _cmd_restore "$@" ;;
+        rm-backup|rm-bak|remove-backup|remove-bak|delete-backup|delete-bak)
+                                           _cmd_rm_backup "$@" ;;
+        rm-all-backups|rm-all-bak|remove-all-backups|remove-all-bak|delete-all-backups|delete-all-bak)
+                                           _cmd_rm_all_backups ;;
         
         # 其他
-        lang|language)              _cmd_lang "$@" ;;
-        uninstall)                  _cmd_uninstall ;;
-        help|-h|--help)             _cmd_help ;;
-        version|-v|--version)       _cmd_version ;;
+        lang|language)                     _cmd_lang "$@" ;;
+        uninstall)                         _cmd_uninstall ;;
+        help|-h|--help)                    _cmd_help ;;
+        version|-v|--version)              _cmd_version ;;
         
         *)
             _error "$(_t err_cmd_not_found): $cmd"
