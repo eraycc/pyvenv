@@ -381,7 +381,7 @@ L[cn,version_author]="Python 虚拟环境管理器"
 L[en,version_author]="Python Virtual Environment Manager"
 
 # ======================== 版本号 ========================
-PYVENV_VERSION="1.1.0"
+PYVENV_VERSION="1.2.0"
 
 # ======================== 颜色与格式 ========================
 if [[ -t 1 ]]; then
@@ -1281,7 +1281,7 @@ _cmd_help() {
     _echo "    ${C_CYAN}list, ls${C_RESET}                    $(_t help_cmd_list)"
     _echo "    ${C_CYAN}new, add${C_RESET} <name>             $(_t help_cmd_new)"
     _echo "    ${C_CYAN}use, on${C_RESET} <name>              $(_t help_cmd_use)"
-    _echo "    ${C_CYAN}off, quit, exit${C_RESET}             $(_t help_cmd_off)"
+    _echo "    ${C_CYAN}quit ,exit, off${C_RESET}             $(_t help_cmd_off)"
     _echo ""
     
     _echo "  ${C_YELLOW}$(_t help_section_manage)${C_RESET}"
@@ -1410,7 +1410,7 @@ EOF
     
     # 重新加载 shell 配置使其立即生效
     # shellcheck source=/dev/null
-    source "$shell_rc" 2>/dev/null
+    source "$shell_rc" 2>/dev/null || true
     
     _success "$(_t install_ready)"
     _echo ""
