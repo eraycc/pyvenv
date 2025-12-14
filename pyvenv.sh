@@ -136,6 +136,28 @@ L[cn,env_info_title]="环境详情"
 L[en,env_info_title]="Environment Details"
 L[cn,env_count]="共 %d 个环境"
 L[en,env_count]="%d environment(s)"
+L[cn,env_using_python]="使用 Python"
+L[en,env_using_python]="Using Python"
+
+# ---- Python 解释器相关 ----
+L[cn,python_not_found]="未找到指定的 Python 解释器"
+L[en,python_not_found]="Specified Python interpreter not found"
+L[cn,python_invalid]="无效的 Python 解释器"
+L[en,python_invalid]="Invalid Python interpreter"
+L[cn,python_version_not_found]="未找到 Python %s"
+L[en,python_version_not_found]="Python %s not found"
+L[cn,python_path_not_found]="Python 路径不存在"
+L[en,python_path_not_found]="Python path does not exist"
+L[cn,python_not_executable]="指定的路径不是可执行文件"
+L[en,python_not_executable]="Specified path is not executable"
+L[cn,python_no_venv]="该 Python 解释器不支持 venv 模块"
+L[en,python_no_venv]="This Python interpreter does not support venv module"
+L[cn,python_version_too_old]="Python 版本过低，需要 3.3 或更高版本"
+L[en,python_version_too_old]="Python version too old, requires 3.3 or higher"
+L[cn,python2_not_supported]="不支持 Python 2.x，请使用 Python 3.3 或更高版本"
+L[en,python2_not_supported]="Python 2.x is not supported, please use Python 3.3 or higher"
+L[cn,python_detected]="检测到 Python"
+L[en,python_detected]="Detected Python"
 
 # ---- 包管理消息 ----
 L[cn,pkg_updating]="正在检查并升级过期的包"
@@ -222,6 +244,8 @@ L[cn,err_download_failed]="下载失败，请检查网络连接"
 L[en,err_download_failed]="Download failed. Please check your network connection"
 L[cn,err_no_backup_name]="请指定备份文件名"
 L[en,err_no_backup_name]="Please specify a backup file name"
+L[cn,err_p_no_value]="选项 -p 需要指定 Python 版本或路径"
+L[en,err_p_no_value]="Option -p requires a Python version or path"
 
 # ---- 语言设置 ----
 L[cn,lang_current]="当前语言"
@@ -351,6 +375,8 @@ L[cn,help_ex_run]="在环境中运行 pip 命令"
 L[en,help_ex_run]="Run pip command in an environment"
 L[cn,help_ex_backup]="备份环境"
 L[en,help_ex_backup]="Backup an environment"
+L[cn,help_ex_python]="使用指定 Python 版本创建环境"
+L[en,help_ex_python]="Create environment with specific Python version"
 
 L[cn,help_dirs]="目录说明："
 L[en,help_dirs]="Directories:"
@@ -369,7 +395,7 @@ L[cn,version_author]="Python 虚拟环境管理器"
 L[en,version_author]="Python Virtual Environment Manager"
 
 # ======================== 版本号 ========================
-PYVENV_VERSION="1.6.8"
+PYVENV_VERSION="1.8.9"
 
 # ======================== 颜色与格式 ========================
 if [[ -t 1 ]]; then
@@ -542,6 +568,137 @@ _clean_empty_lines() {
     fi
 }
 
+# ======================== Python 解释器解析函数 ========================
+
+# 解析 Python 版本或路径，返回可用的 Python 解释器路径
+# 参数: $1 - 版本号(如 3, 3.12)或完整路径
+# 返回: 0 成功（路径输出到 stdout），1 失败（错误信息输出到 stderr）
+_resolve_python() {
+    local spec="$1"
+    local python_cmd=""
+    
+    # 如果未指定，使用默认 Python
+    if [[ -z "$spec" ]]; then
+        for cmd in python3 python; do
+            if command -v "$cmd" &>/dev/null; then
+                python_cmd="$cmd"
+                break
+            fi
+        done
+        
+        if [[ -z "$python_cmd" ]]; then
+            echo "$(_t err_no_python)" >&2
+            return 1
+        fi
+        
+        echo "$python_cmd"
+        return 0
+    fi
+    
+    # 展开 ~ 和环境变量
+    spec="${spec/#\~/$HOME}"
+    spec=$(eval echo "$spec" 2>/dev/null) || spec="$spec"
+    
+    # 判断是路径还是版本号
+    if [[ "$spec" == */* || "$spec" == .* ]]; then
+        # 这是一个路径
+        if [[ ! -e "$spec" ]]; then
+            echo "$(_t python_path_not_found): $spec" >&2
+            return 1
+        fi
+        
+        if [[ ! -x "$spec" ]]; then
+            echo "$(_t python_not_executable): $spec" >&2
+            return 1
+        fi
+        
+        python_cmd="$spec"
+    else
+        # 这是一个版本号
+        # 检查是否是 Python 2.x
+        if [[ "$spec" == 2 || "$spec" == 2.* ]]; then
+            echo "$(_t python2_not_supported)" >&2
+            return 1
+        fi
+        
+        # 尝试查找对应版本的 Python
+        local tried_cmds=()
+        
+        # 尝试 python3.x 格式
+        if [[ "$spec" =~ ^3\.[0-9]+$ ]]; then
+            tried_cmds+=("python$spec")
+        fi
+        
+        # 尝试 python3 格式（如果只指定了主版本号 3）
+        if [[ "$spec" == "3" ]]; then
+            tried_cmds+=("python3")
+        fi
+        
+        # 通用尝试
+        tried_cmds+=("python$spec")
+        
+        for cmd in "${tried_cmds[@]}"; do
+            if command -v "$cmd" &>/dev/null; then
+                python_cmd="$cmd"
+                break
+            fi
+        done
+        
+        if [[ -z "$python_cmd" ]]; then
+            echo "$(_tf python_version_not_found "$spec")" >&2
+            return 1
+        fi
+    fi
+    
+    # 验证是否是有效的 Python 解释器
+    if ! "$python_cmd" -c "import sys" &>/dev/null; then
+        echo "$(_t python_invalid): $python_cmd" >&2
+        return 1
+    fi
+    
+    # 获取 Python 版本信息
+    local py_version
+    py_version=$("$python_cmd" -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')" 2>/dev/null)
+    
+    if [[ -z "$py_version" ]]; then
+        echo "$(_t python_invalid): $python_cmd" >&2
+        return 1
+    fi
+    
+    # 检查是否是 Python 2.x
+    local major_version
+    major_version=$("$python_cmd" -c "import sys; print(sys.version_info.major)" 2>/dev/null)
+    
+    if [[ "$major_version" == "2" ]]; then
+        echo "$(_t python2_not_supported)" >&2
+        return 1
+    fi
+    
+    # 检查版本是否 >= 3.3（venv 模块需要）
+    local minor_version
+    minor_version=$("$python_cmd" -c "import sys; print(sys.version_info.minor)" 2>/dev/null)
+    
+    if [[ "$major_version" -eq 3 && "$minor_version" -lt 3 ]]; then
+        echo "$(_t python_version_too_old): Python $py_version" >&2
+        return 1
+    fi
+    
+    # 检查是否支持 venv 模块
+    if ! "$python_cmd" -c "import venv" &>/dev/null; then
+        echo "$(_t python_no_venv): $python_cmd" >&2
+        return 1
+    fi
+    
+    echo "$python_cmd"
+    return 0
+}
+
+# 获取 Python 解释器的版本字符串（用于显示）
+_get_python_version() {
+    local python_cmd="$1"
+    "$python_cmd" -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}')" 2>/dev/null || echo "unknown"
+}
+
 # ======================== 命令实现 ========================
 
 # 列出所有环境
@@ -582,13 +739,49 @@ _cmd_list() {
     _echo ""
 }
 
-# 创建环境
-_cmd_create() {
+# 解析创建环境的参数
+# 设置全局变量: _ENV_NAME, _PYTHON_SPEC
+_parse_create_args() {
+    _ENV_NAME=""
+    _PYTHON_SPEC=""
+    
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            -p|--python)
+                if [[ -z "${2:-}" || "${2:0:1}" == "-" ]]; then
+                    _error "$(_t err_p_no_value)"
+                    return 1
+                fi
+                _PYTHON_SPEC="$2"
+                shift 2
+                ;;
+            -*)
+                _error "$(_t err_cmd_not_found): $1"
+                return 1
+                ;;
+            *)
+                if [[ -z "$_ENV_NAME" ]]; then
+                    _ENV_NAME="$1"
+                else
+                    _error "$(_t err_too_many_args)"
+                    return 1
+                fi
+                shift
+                ;;
+        esac
+    done
+    
+    return 0
+}
+
+# 创建环境（内部实现）
+_do_create_env() {
     local name="$1"
+    local python_spec="$2"
     
     if [[ -z "$name" ]]; then
         _error "$(_t err_no_name)"
-        _echo "  $(_t usage): pyvenv create <$(_t name)>"
+        _echo "  $(_t usage): pyvenv create <$(_t name)> [-p $(_t version)|$(_t path)]"
         return 1
     fi
     
@@ -602,36 +795,49 @@ _cmd_create() {
         return 1
     fi
     
-    # 查找 Python
-    local python_cmd=""
-    for cmd in python3 python; do
-        if command -v "$cmd" &>/dev/null; then
-            python_cmd="$cmd"
-            break
-        fi
-    done
+    # 解析 Python 解释器
+    local python_cmd
+    python_cmd=$(_resolve_python "$python_spec")
     
-    if [[ -z "$python_cmd" ]]; then
-        _error "$(_t err_no_python)"
+    if [[ $? -ne 0 ]]; then
+        # 错误消息已经在 _resolve_python 中输出
         return 1
     fi
     
+    local py_version
+    py_version=$(_get_python_version "$python_cmd")
+    
     _info "$(_t env_creating): ${C_CYAN}$name${C_RESET}"
+    _dim "  $(_t env_using_python): $python_cmd ($py_version)"
     
     if "$python_cmd" -m venv "$PYVENV_ENV_DIR/$name" 2>/dev/null; then
         _success "$(_t env_created): ${C_CYAN}$name${C_RESET}"
         return 0
     else
         _error "$(_t env_create_failed)"
+        # 清理可能创建的不完整目录
+        rm -rf "${PYVENV_ENV_DIR:?}/$name" 2>/dev/null
         return 1
     fi
 }
 
+# 创建环境
+_cmd_create() {
+    if ! _parse_create_args "$@"; then
+        return 1
+    fi
+    
+    _do_create_env "$_ENV_NAME" "$_PYTHON_SPEC"
+}
+
 # 创建并激活
 _cmd_new() {
-    local name="$1"
-    if _cmd_create "$name"; then
-        _cmd_use "$name"
+    if ! _parse_create_args "$@"; then
+        return 1
+    fi
+    
+    if _do_create_env "$_ENV_NAME" "$_PYTHON_SPEC"; then
+        _cmd_use "$_ENV_NAME"
     fi
 }
 
@@ -1201,45 +1407,49 @@ _cmd_help() {
     _echo ""
     
     _echo "  ${C_YELLOW}$(_t help_section_basic)${C_RESET}"
-    _echo "    ${C_CYAN}list, ls${C_RESET}                    $(_t help_cmd_list)"
-    _echo "    ${C_CYAN}new, add${C_RESET} <name>             $(_t help_cmd_new)"
-    _echo "    ${C_CYAN}use, on${C_RESET} <name>              $(_t help_cmd_use)"
-    _echo "    ${C_CYAN}quit, exit, off${C_RESET}             $(_t help_cmd_off)"
+    _echo "    ${C_CYAN}list, ls${C_RESET}                        $(_t help_cmd_list)"
+    _echo "    ${C_CYAN}new, add${C_RESET} <name> [-p ver|path]   $(_t help_cmd_new)"
+    _echo "    ${C_CYAN}use, on${C_RESET} <name>                  $(_t help_cmd_use)"
+    _echo "    ${C_CYAN}quit, exit, off${C_RESET}                 $(_t help_cmd_off)"
     _echo ""
     
     _echo "  ${C_YELLOW}$(_t help_section_manage)${C_RESET}"
-    _echo "    ${C_CYAN}create${C_RESET} <name>               $(_t help_cmd_create)"
-    _echo "    ${C_CYAN}rm, remove${C_RESET} <name>           $(_t help_cmd_rm)"
-    _echo "    ${C_CYAN}rm-all${C_RESET}                      $(_t help_cmd_rm_all)"
-    _echo "    ${C_CYAN}reset${C_RESET} [name]                $(_t help_cmd_reset)"
-    _echo "    ${C_CYAN}info${C_RESET} [name]                 $(_t help_cmd_info)"
-    _echo "    ${C_CYAN}where${C_RESET} [name]                $(_t help_cmd_where)"
-    _echo "    ${C_CYAN}run${C_RESET} <name> -- <cmd>         $(_t help_cmd_run)"
+    _echo "    ${C_CYAN}create${C_RESET} <name> [-p ver|path]     $(_t help_cmd_create)"
+    _echo "    ${C_CYAN}rm, remove${C_RESET} <name>               $(_t help_cmd_rm)"
+    _echo "    ${C_CYAN}rm-all${C_RESET}                          $(_t help_cmd_rm_all)"
+    _echo "    ${C_CYAN}reset${C_RESET} [name]                    $(_t help_cmd_reset)"
+    _echo "    ${C_CYAN}info${C_RESET} [name]                     $(_t help_cmd_info)"
+    _echo "    ${C_CYAN}where${C_RESET} [name]                    $(_t help_cmd_where)"
+    _echo "    ${C_CYAN}run${C_RESET} <name> -- <cmd>             $(_t help_cmd_run)"
     _echo ""
     
     _echo "  ${C_YELLOW}$(_t help_section_package)${C_RESET}"
-    _echo "    ${C_CYAN}update, upgrade${C_RESET}             $(_t help_cmd_update)"
+    _echo "    ${C_CYAN}update, upgrade${C_RESET}                 $(_t help_cmd_update)"
     _echo ""
     
     _echo "  ${C_YELLOW}$(_t help_section_backup)${C_RESET}"
-    _echo "    ${C_CYAN}backup${C_RESET} [name]               $(_t help_cmd_backup)"
-    _echo "    ${C_CYAN}backups${C_RESET}                     $(_t help_cmd_backups)"
-    _echo "    ${C_CYAN}restore, recover${C_RESET} <file>     $(_t help_cmd_restore)"
-    _echo "    ${C_CYAN}rm-backup${C_RESET} <file>            $(_t help_cmd_rm_backup)"
-    _echo "    ${C_CYAN}rm-all-backups${C_RESET}              $(_t help_cmd_rm_all_backups)"
+    _echo "    ${C_CYAN}backup${C_RESET} [name]                   $(_t help_cmd_backup)"
+    _echo "    ${C_CYAN}backups${C_RESET}                         $(_t help_cmd_backups)"
+    _echo "    ${C_CYAN}restore, recover${C_RESET} <file>         $(_t help_cmd_restore)"
+    _echo "    ${C_CYAN}rm-backup${C_RESET} <file>                $(_t help_cmd_rm_backup)"
+    _echo "    ${C_CYAN}rm-all-backups${C_RESET}                  $(_t help_cmd_rm_all_backups)"
     _echo ""
     
     _echo "  ${C_YELLOW}$(_t help_section_other)${C_RESET}"
-    _echo "    ${C_CYAN}lang${C_RESET} [cn|en]                $(_t help_cmd_lang)"
-    _echo "    ${C_CYAN}uninstall${C_RESET}                   $(_t help_cmd_uninstall)"
-    _echo "    ${C_CYAN}help, -h${C_RESET}                    $(_t help_cmd_help)"
-    _echo "    ${C_CYAN}version, -v${C_RESET}                 $(_t help_cmd_version)"
+    _echo "    ${C_CYAN}lang${C_RESET} [cn|en]                    $(_t help_cmd_lang)"
+    _echo "    ${C_CYAN}uninstall${C_RESET}                       $(_t help_cmd_uninstall)"
+    _echo "    ${C_CYAN}help, -h${C_RESET}                        $(_t help_cmd_help)"
+    _echo "    ${C_CYAN}version, -v${C_RESET}                     $(_t help_cmd_version)"
     _echo ""
     
     _echo "${C_BOLD}$(_t help_examples)${C_RESET}"
     _echo ""
     _echo "  ${C_DIM}# $(_t help_ex_new)${C_RESET}"
     _echo "  pyvenv new myproject"
+    _echo ""
+    _echo "  ${C_DIM}# $(_t help_ex_python)${C_RESET}"
+    _echo "  pyvenv new ai -p 3.12"
+    _echo "  pyvenv new demo -p ~/.pyenv/versions/3.11.6/bin/python"
     _echo ""
     _echo "  ${C_DIM}# $(_t help_ex_use)${C_RESET}"
     _echo "  pyvenv use myproject"
@@ -1387,6 +1597,20 @@ _pyvenv_completions() {
         use|on|rm|remove|info|where|backup|reset|run)
             local envs=$(_list_envs 2>/dev/null | tr '\n' ' ')
             COMPREPLY=($(compgen -W "$envs" -- "$cur"))
+            ;;
+        new|add|create)
+            # 支持 -p 选项补全
+            if [[ "$cur" == -* ]]; then
+                COMPREPLY=($(compgen -W "-p --python" -- "$cur"))
+            fi
+            ;;
+        -p|--python)
+            # 补全可用的 Python 版本
+            local pythons=""
+            for cmd in python3 python3.{8..13} python; do
+                command -v "$cmd" &>/dev/null && pythons+="$cmd "
+            done
+            COMPREPLY=($(compgen -W "$pythons" -- "$cur"))
             ;;
         lang|language)
             COMPREPLY=($(compgen -W "cn en" -- "$cur"))
