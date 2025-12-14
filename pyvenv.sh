@@ -262,6 +262,8 @@ L[cn,install_already]="pyvenv 已经安装。如需重新安装，请先卸载�
 L[en,install_already]="pyvenv is already installed. To reinstall, please uninstall first."
 L[cn,install_force_hint]="或使用 --force 强制重新安装"
 L[en,install_force_hint]="Or use --force to force reinstall"
+L[cn,install_note]="如果运行 pyvenv 失败，请新建终端窗口或手动执行："
+L[en,install_note]="If pyvenv command fails, please open a new terminal or run:"
 
 L[cn,uninstall_title]="卸载 pyvenv"
 L[en,uninstall_title]="Uninstall pyvenv"
@@ -381,7 +383,7 @@ L[cn,version_author]="Python 虚拟环境管理器"
 L[en,version_author]="Python Virtual Environment Manager"
 
 # ======================== 版本号 ========================
-PYVENV_VERSION="1.2.0"
+PYVENV_VERSION="1.6.8"
 
 # ======================== 颜色与格式 ========================
 if [[ -t 1 ]]; then
@@ -542,6 +544,16 @@ _get_shell_rc() {
         */bash) echo "$HOME/.bashrc" ;;
         *)      echo "$HOME/.bashrc" ;;
     esac
+}
+
+# 清理 rc 文件中过多的连续空行（保留最多1个连续空行）
+_clean_empty_lines() {
+    local file="$1"
+    if [[ -f "$file" ]]; then
+        local tmp_file="${file}.pyvenv.tmp"
+        # 使用 awk 合并连续空行为单个空行，并移除文件末尾的空行
+        awk 'NF {blank=0} !NF {blank++} blank<=1' "$file" > "$tmp_file" && mv "$tmp_file" "$file"
+    fi
 }
 
 # ======================== 命令实现 ========================
@@ -1254,10 +1266,10 @@ _do_uninstall_manager() {
     # 从 rc 文件移除配置行
     if [[ -f "$shell_rc" ]]; then
         local tmp_file="${shell_rc}.pyvenv.tmp"
-        grep -v '\.pyvenv/pyvenv\.sh' "$shell_rc" > "$tmp_file" 2>/dev/null && mv "$tmp_file" "$shell_rc"
-        # 清理可能的空行和注释
-        sed -i.bak '/^# pyvenv/d' "$shell_rc" 2>/dev/null || sed -i '' '/^# pyvenv/d' "$shell_rc" 2>/dev/null
-        rm -f "${shell_rc}.bak" 2>/dev/null
+        # 移除包含 .pyvenv 的行和 pyvenv 注释行
+        grep -v -E '\.pyvenv|^# pyvenv' "$shell_rc" > "$tmp_file" 2>/dev/null && mv "$tmp_file" "$shell_rc"
+        # 清理过多的连续空行
+        _clean_empty_lines "$shell_rc"
     fi
     
     # 删除配置目录
@@ -1394,7 +1406,9 @@ EOF
     
     # 移除旧配置（如果有）
     if [[ -f "$shell_rc" ]]; then
-        grep -v '\.pyvenv' "$shell_rc" > "${shell_rc}.tmp" 2>/dev/null && mv "${shell_rc}.tmp" "$shell_rc"
+        grep -v -E '\.pyvenv|^# pyvenv' "$shell_rc" > "${shell_rc}.tmp" 2>/dev/null && mv "${shell_rc}.tmp" "$shell_rc"
+        # 清理过多的连续空行
+        _clean_empty_lines "$shell_rc"
     fi
     
     # 添加新配置
@@ -1407,11 +1421,6 @@ EOF
     _echo ""
     _success "$(_t install_success)"
     _echo ""
-    
-    # 重新加载 shell 配置使其立即生效
-    # shellcheck source=/dev/null
-    source "$shell_rc" 2>/dev/null || true
-    
     _success "$(_t install_ready)"
     _echo ""
     _echo "$(_t install_try_now)"
@@ -1419,6 +1428,12 @@ EOF
     _echo "  ${C_CYAN}pyvenv help${C_RESET}"
     _echo "  ${C_CYAN}pyvenv new myenv${C_RESET}"
     _echo ""
+    _warn "$(_t install_note)"
+    _echo "  ${C_DIM}source $shell_rc${C_RESET}"
+    _echo ""
+    # 重新加载 shell 配置
+    # shellcheck source=/dev/null
+    source "$shell_rc" 2>/dev/null || true
 }
 
 # curl 卸载入口
