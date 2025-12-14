@@ -16,7 +16,8 @@ pyvenv 是一个 纯 Bash 编写的 Python 虚拟环境管理器，目标是“�
 
 Demo:
 
-<img width="1002" height="1676" alt="1000114343" src="https://github.com/user-attachments/assets/ba21dcf4-74b3-40f9-956d-12ce75f585f9" />
+<img width="986" height="1659" alt="1000114344" src="https://github.com/user-attachments/assets/377d5be7-bfd4-4eef-a326-decdf3e51277" />
+
 
 ---
 
