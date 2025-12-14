@@ -14,6 +14,10 @@ pyvenv 是一个 纯 Bash 编写的 Python 虚拟环境管理器，目标是“�
 
 一句话：比 venv 官方脚本好用，比 conda 轻量，比 virtualenvwrapper 简洁。
 
+Demo:
+
+<img width="1002" height="1676" alt="1000114343" src="https://github.com/user-attachments/assets/ba21dcf4-74b3-40f9-956d-12ce75f585f9" />
+
 ---
 
 二、一分钟上手
