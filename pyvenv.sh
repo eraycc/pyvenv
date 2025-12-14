@@ -1409,8 +1409,8 @@ _cmd_help() {
     _echo "  ${C_YELLOW}$(_t help_section_basic)${C_RESET}"
     _echo "    ${C_CYAN}list, ls${C_RESET}                        $(_t help_cmd_list)"
     _echo "    ${C_CYAN}new, add${C_RESET} <name> [-p ver|path]   $(_t help_cmd_new)"
-    _echo "    ${C_CYAN}use, start, on${C_RESET} <name>                  $(_t help_cmd_use)"
-    _echo "    ${C_CYAN}exit, stop, quit, off${C_RESET}                 $(_t help_cmd_off)"
+    _echo "    ${C_CYAN}use, start, on${C_RESET} <name>           $(_t help_cmd_use)"
+    _echo "    ${C_CYAN}exit, stop, quit, off${C_RESET}           $(_t help_cmd_off)"
     _echo ""
     
     _echo "  ${C_YELLOW}$(_t help_section_manage)${C_RESET}"
