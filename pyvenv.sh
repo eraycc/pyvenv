@@ -1409,8 +1409,8 @@ _cmd_help() {
     _echo "  ${C_YELLOW}$(_t help_section_basic)${C_RESET}"
     _echo "    ${C_CYAN}list, ls${C_RESET}                        $(_t help_cmd_list)"
     _echo "    ${C_CYAN}new, add${C_RESET} <name> [-p ver|path]   $(_t help_cmd_new)"
-    _echo "    ${C_CYAN}use, on${C_RESET} <name>                  $(_t help_cmd_use)"
-    _echo "    ${C_CYAN}quit, exit, off${C_RESET}                 $(_t help_cmd_off)"
+    _echo "    ${C_CYAN}use, start, on${C_RESET} <name>                  $(_t help_cmd_use)"
+    _echo "    ${C_CYAN}exit, stop, quit, off${C_RESET}                 $(_t help_cmd_off)"
     _echo ""
     
     _echo "  ${C_YELLOW}$(_t help_section_manage)${C_RESET}"
@@ -1586,7 +1586,7 @@ _pyvenv_completions() {
     local cur="${COMP_WORDS[COMP_CWORD]}"
     local prev="${COMP_WORDS[COMP_CWORD-1]}"
     
-    local commands="list ls new add create use on off quit exit deactivate rm remove rm-all reset info where run update upgrade backup backups restore recover rm-backup rm-all-backups lang language uninstall help version"
+    local commands="list ls new add create use on start workon activate off quit exit stop deactivate rm remove rm-all reset info where run update upgrade backup backups restore recover rm-backup rm-all-backups lang language uninstall help version"
     
     if [[ $COMP_CWORD -eq 1 ]]; then
         COMPREPLY=($(compgen -W "$commands" -- "$cur"))
@@ -1633,8 +1633,8 @@ pyvenv() {
         list|ls)                           _cmd_list ;;
         new|add)                           _cmd_new "$@" ;;
         create)                            _cmd_create "$@" ;;
-        use|on|activate|workon)            _cmd_use "$@" ;;
-        off|quit|exit|deactivate)          _cmd_off ;;
+        use|on|start|activate|workon)            _cmd_use "$@" ;;
+        off|quit|exit|stop|deactivate)          _cmd_off ;;
         
         # 环境管理
         rm|remove|delete)                  _cmd_rm "$@" ;;
