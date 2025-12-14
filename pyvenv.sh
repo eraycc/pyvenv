@@ -122,14 +122,6 @@ L[cn,env_removed]="环境已删除"
 L[en,env_removed]="Environment removed"
 L[cn,env_remove_active_hint]="已自动退出正在使用的环境"
 L[en,env_remove_active_hint]="Automatically deactivated the active environment"
-L[cn,env_copying]="正在复制环境"
-L[en,env_copying]="Copying environment"
-L[cn,env_copied]="环境复制完成"
-L[en,env_copied]="Environment copied successfully"
-L[cn,env_renaming]="正在重命名环境"
-L[en,env_renaming]="Renaming environment"
-L[cn,env_renamed]="环境重命名完成"
-L[en,env_renamed]="Environment renamed successfully"
 L[cn,env_resetting]="正在重置环境"
 L[en,env_resetting]="Resetting environment"
 L[cn,env_reset_done]="环境已重置（仅保留 pip）"
@@ -210,8 +202,6 @@ L[cn,err_no_name]="请指定环境名称"
 L[en,err_no_name]="Please specify an environment name"
 L[cn,err_invalid_name]="无效的环境名称。只能包含字母、数字、下划线和连字符，且不能以连字符开头。"
 L[en,err_invalid_name]="Invalid environment name. Use only letters, numbers, underscores and hyphens. Cannot start with hyphen."
-L[cn,err_same_name]="源环境和目标环境名称不能相同"
-L[en,err_same_name]="Source and destination names cannot be the same"
 L[cn,err_no_python]="未找到 Python。请先安装 Python 3。"
 L[en,err_no_python]="Python not found. Please install Python 3 first."
 L[cn,err_python_version]="需要 Python 3.3 或更高版本"
@@ -322,10 +312,6 @@ L[cn,help_cmd_rm]="删除指定的虚拟环境"
 L[en,help_cmd_rm]="Remove a virtual environment"
 L[cn,help_cmd_rm_all]="删除所有虚拟环境（需二次确认）"
 L[en,help_cmd_rm_all]="Remove all virtual environments (requires confirmation)"
-L[cn,help_cmd_cp]="复制一个虚拟环境"
-L[en,help_cmd_cp]="Copy a virtual environment"
-L[cn,help_cmd_mv]="重命名虚拟环境"
-L[en,help_cmd_mv]="Rename a virtual environment"
 L[cn,help_cmd_reset]="重置环境（删除所有包，保留 pip）"
 L[en,help_cmd_reset]="Reset environment (remove all packages, keep pip)"
 L[cn,help_cmd_info]="显示环境的详细信息"
@@ -747,81 +733,6 @@ _cmd_rm_all() {
         rm -rf "${PYVENV_ENV_DIR:?}/$name"
         _success "$(_t env_removed): $name"
     done < <(_list_envs)
-}
-
-# 复制环境
-_cmd_cp() {
-    local src="$1" dst="$2"
-    
-    if [[ -z "$src" || -z "$dst" ]]; then
-        _error "$(_t err_missing_arg)"
-        _echo "  $(_t usage): pyvenv cp <$(_t source)> <$(_t target)>"
-        return 1
-    fi
-    
-    if ! _valid_name "$dst"; then
-        _error "$(_t err_invalid_name)"
-        return 1
-    fi
-    
-    if ! _env_exists "$src"; then
-        _error "$(_t env_not_found): $src"
-        return 1
-    fi
-    
-    if [[ "$src" == "$dst" ]]; then
-        _error "$(_t err_same_name)"
-        return 1
-    fi
-    
-    if _env_exists "$dst"; then
-        _error "$(_t env_exists): $dst"
-        return 1
-    fi
-    
-    _info "$(_t env_copying): ${C_CYAN}$src${C_RESET} → ${C_CYAN}$dst${C_RESET}"
-    cp -a "$PYVENV_ENV_DIR/$src" "$PYVENV_ENV_DIR/$dst"
-    _success "$(_t env_copied)"
-}
-
-# 重命名环境
-_cmd_mv() {
-    local src="$1" dst="$2"
-    
-    if [[ -z "$src" || -z "$dst" ]]; then
-        _error "$(_t err_missing_arg)"
-        _echo "  $(_t usage): pyvenv mv <$(_t source)> <$(_t target)>"
-        return 1
-    fi
-    
-    if ! _valid_name "$dst"; then
-        _error "$(_t err_invalid_name)"
-        return 1
-    fi
-    
-    if ! _env_exists "$src"; then
-        _error "$(_t env_not_found): $src"
-        return 1
-    fi
-    
-    if [[ "$src" == "$dst" ]]; then
-        _error "$(_t err_same_name)"
-        return 1
-    fi
-    
-    if _env_exists "$dst"; then
-        _error "$(_t env_exists): $dst"
-        return 1
-    fi
-    
-    # 如果正在使用源环境，先退出
-    if [[ "${VIRTUAL_ENV:-}" == "$PYVENV_ENV_DIR/$src" ]]; then
-        deactivate 2>/dev/null
-    fi
-    
-    _info "$(_t env_renaming): ${C_CYAN}$src${C_RESET} → ${C_CYAN}$dst${C_RESET}"
-    mv "$PYVENV_ENV_DIR/$src" "$PYVENV_ENV_DIR/$dst"
-    _success "$(_t env_renamed)"
 }
 
 # 重置环境
@@ -1293,15 +1204,13 @@ _cmd_help() {
     _echo "    ${C_CYAN}list, ls${C_RESET}                    $(_t help_cmd_list)"
     _echo "    ${C_CYAN}new, add${C_RESET} <name>             $(_t help_cmd_new)"
     _echo "    ${C_CYAN}use, on${C_RESET} <name>              $(_t help_cmd_use)"
-    _echo "    ${C_CYAN}quit ,exit, off${C_RESET}             $(_t help_cmd_off)"
+    _echo "    ${C_CYAN}quit, exit, off${C_RESET}             $(_t help_cmd_off)"
     _echo ""
     
     _echo "  ${C_YELLOW}$(_t help_section_manage)${C_RESET}"
     _echo "    ${C_CYAN}create${C_RESET} <name>               $(_t help_cmd_create)"
     _echo "    ${C_CYAN}rm, remove${C_RESET} <name>           $(_t help_cmd_rm)"
     _echo "    ${C_CYAN}rm-all${C_RESET}                      $(_t help_cmd_rm_all)"
-    _echo "    ${C_CYAN}cp, copy${C_RESET} <src> <dst>        $(_t help_cmd_cp)"
-    _echo "    ${C_CYAN}mv, rename${C_RESET} <old> <new>      $(_t help_cmd_mv)"
     _echo "    ${C_CYAN}reset${C_RESET} [name]                $(_t help_cmd_reset)"
     _echo "    ${C_CYAN}info${C_RESET} [name]                 $(_t help_cmd_info)"
     _echo "    ${C_CYAN}where${C_RESET} [name]                $(_t help_cmd_where)"
@@ -1467,7 +1376,7 @@ _pyvenv_completions() {
     local cur="${COMP_WORDS[COMP_CWORD]}"
     local prev="${COMP_WORDS[COMP_CWORD-1]}"
     
-    local commands="list ls new add create use on off quit exit deactivate rm remove rm-all cp copy mv rename reset info where run update upgrade backup backups restore recover rm-backup rm-all-backups lang language uninstall help version"
+    local commands="list ls new add create use on off quit exit deactivate rm remove rm-all reset info where run update upgrade backup backups restore recover rm-backup rm-all-backups lang language uninstall help version"
     
     if [[ $COMP_CWORD -eq 1 ]]; then
         COMPREPLY=($(compgen -W "$commands" -- "$cur"))
@@ -1475,7 +1384,7 @@ _pyvenv_completions() {
     fi
     
     case "$prev" in
-        use|on|rm|remove|info|where|backup|reset|run|cp|copy|mv|rename)
+        use|on|rm|remove|info|where|backup|reset|run)
             local envs=$(_list_envs 2>/dev/null | tr '\n' ' ')
             COMPREPLY=($(compgen -W "$envs" -- "$cur"))
             ;;
@@ -1506,8 +1415,6 @@ pyvenv() {
         # 环境管理
         rm|remove|delete)                  _cmd_rm "$@" ;;
         rm-all|remove-all|delete-all)      _cmd_rm_all ;;
-        cp|copy|clone)                     _cmd_cp "$@" ;;
-        mv|rename)                         _cmd_mv "$@" ;;
         reset)                             _cmd_reset "$@" ;;
         info)                              _cmd_info "$@" ;;
         where|whereis|path)                _cmd_where "$@" ;;
