@@ -1,0 +1,2046 @@
+#!/usr/bin/env bash
+# ============================================================================
+#  pyvenv - Python 虚拟环境管理器 / Python Virtual Environment Manager
+#  
+#  安装 / Install:
+#    curl -fsSL https://raw.githubusercontent.com/eraycc/pyvenv/main/pyvenv.sh | bash -s -- install
+#    curl -fsSL https://raw.githubusercontent.com/eraycc/pyvenv/main/pyvenv.sh | bash -s -- install en
+#  
+#  卸载 / Uninstall:
+#    pyvenv uninstall
+#    curl -fsSL https://raw.githubusercontent.com/eraycc/pyvenv/main/pyvenv.sh | bash -s -- uninstall
+# ============================================================================
+
+# ======================== 目录与文件路径 ========================
+PYVENV_HOME="${HOME}/.pyvenv"
+PYVENV_SCRIPT="${PYVENV_HOME}/pyvenv.sh"
+PYVENV_CONFIG="${PYVENV_HOME}/config"
+PYVENV_BACKUP_DIR="${PYVENV_HOME}/backups"
+PYVENV_ENV_DIR="${HOME}/pyvenv"
+
+# ======================== 完整语言包 ========================
+declare -gA L
+
+# ---- 通用词汇 ----
+L[cn,name]="名称"
+L[en,name]="Name"
+L[cn,path]="路径"
+L[en,path]="Path"
+L[cn,version]="版本"
+L[en,version]="Version"
+L[cn,python]="Python"
+L[en,python]="Python"
+L[cn,packages]="已安装包"
+L[en,packages]="Packages"
+L[cn,size]="占用空间"
+L[en,size]="Size"
+L[cn,status]="状态"
+L[en,status]="Status"
+L[cn,active]="已激活"
+L[en,active]="Active"
+L[cn,inactive]="未激活"
+L[en,inactive]="Inactive"
+L[cn,yes]="是"
+L[en,yes]="Yes"
+L[cn,no]="否"
+L[en,no]="No"
+L[cn,none]="无"
+L[en,none]="None"
+L[cn,total]="共计"
+L[en,total]="Total"
+L[cn,current]="当前"
+L[en,current]="Current"
+L[cn,target]="目标"
+L[en,target]="Target"
+L[cn,source]="源"
+L[en,source]="Source"
+L[cn,file]="文件"
+L[en,file]="File"
+L[cn,command]="命令"
+L[en,command]="Command"
+L[cn,option]="选项"
+L[en,option]="Option"
+L[cn,argument]="参数"
+L[en,argument]="Argument"
+L[cn,example]="示例"
+L[en,example]="Example"
+L[cn,usage]="用法"
+L[en,usage]="Usage"
+L[cn,description]="描述"
+L[en,description]="Description"
+L[cn,note]="注意"
+L[en,note]="Note"
+L[cn,tip]="提示"
+L[en,tip]="Tip"
+L[cn,warning]="警告"
+L[en,warning]="Warning"
+L[cn,error]="错误"
+L[en,error]="Error"
+L[cn,success]="成功"
+L[en,success]="Success"
+L[cn,failed]="失败"
+L[en,failed]="Failed"
+L[cn,cancelled]="已取消"
+L[en,cancelled]="Cancelled"
+L[cn,confirmed]="已确认"
+L[en,confirmed]="Confirmed"
+L[cn,skipped]="已跳过"
+L[en,skipped]="Skipped"
+L[cn,done]="完成"
+L[en,done]="Done"
+L[cn,please_wait]="请稍候..."
+L[en,please_wait]="Please wait..."
+L[cn,processing]="处理中..."
+L[en,processing]="Processing..."
+L[cn,loading]="加载中..."
+L[en,loading]="Loading..."
+
+# ---- 环境操作消息 ----
+L[cn,env_creating]="正在创建虚拟环境"
+L[en,env_creating]="Creating virtual environment"
+L[cn,env_created]="虚拟环境创建成功"
+L[en,env_created]="Virtual environment created successfully"
+L[cn,env_create_failed]="虚拟环境创建失败"
+L[en,env_create_failed]="Failed to create virtual environment"
+L[cn,env_exists]="虚拟环境已存在"
+L[en,env_exists]="Virtual environment already exists"
+L[cn,env_not_found]="虚拟环境不存在"
+L[en,env_not_found]="Virtual environment not found"
+L[cn,env_activating]="正在激活环境"
+L[en,env_activating]="Activating environment"
+L[cn,env_activated]="环境已激活"
+L[en,env_activated]="Environment activated"
+L[cn,env_deactivating]="正在退出环境"
+L[en,env_deactivating]="Deactivating environment"
+L[cn,env_deactivated]="已退出环境"
+L[en,env_deactivated]="Environment deactivated"
+L[cn,env_no_active]="当前没有激活的环境"
+L[en,env_no_active]="No environment is currently active"
+L[cn,env_removing]="正在删除环境"
+L[en,env_removing]="Removing environment"
+L[cn,env_removed]="环境已删除"
+L[en,env_removed]="Environment removed"
+L[cn,env_remove_active_hint]="已自动退出正在使用的环境"
+L[en,env_remove_active_hint]="Automatically deactivated the active environment"
+L[cn,env_resetting]="正在重置环境"
+L[en,env_resetting]="Resetting environment"
+L[cn,env_reset_done]="环境已重置（仅保留 pip）"
+L[en,env_reset_done]="Environment reset (pip only)"
+L[cn,env_empty_list]="暂无虚拟环境"
+L[en,env_empty_list]="No virtual environments found"
+L[cn,env_list_title]="虚拟环境列表"
+L[en,env_list_title]="Virtual Environments"
+L[cn,env_list_hint]="提示：使用 'pyvenv new <名称>' 创建新环境"
+L[en,env_list_hint]="Tip: Use 'pyvenv new <name>' to create a new environment"
+L[cn,env_info_title]="环境详情"
+L[en,env_info_title]="Environment Details"
+L[cn,env_count]="共 %d 个环境"
+L[en,env_count]="%d environment(s)"
+L[cn,env_using_python]="使用 Python"
+L[en,env_using_python]="Using Python"
+
+# ---- Python 解释器相关 ----
+L[cn,python_not_found]="未找到指定的 Python 解释器"
+L[en,python_not_found]="Specified Python interpreter not found"
+L[cn,python_invalid]="无效的 Python 解释器"
+L[en,python_invalid]="Invalid Python interpreter"
+L[cn,python_version_not_found]="未找到 Python %s"
+L[en,python_version_not_found]="Python %s not found"
+L[cn,python_path_not_found]="Python 路径不存在"
+L[en,python_path_not_found]="Python path does not exist"
+L[cn,python_not_executable]="指定的路径不是可执行文件"
+L[en,python_not_executable]="Specified path is not executable"
+L[cn,python_no_venv]="该 Python 解释器不支持 venv 模块"
+L[en,python_no_venv]="This Python interpreter does not support venv module"
+L[cn,python_version_too_old]="Python 版本过低，需要 3.3 或更高版本"
+L[en,python_version_too_old]="Python version too old, requires 3.3 or higher"
+L[cn,python2_not_supported]="不支持 Python 2.x，请使用 Python 3.3 或更高版本"
+L[en,python2_not_supported]="Python 2.x is not supported, please use Python 3.3 or higher"
+L[cn,python_detected]="检测到 Python"
+L[en,python_detected]="Detected Python"
+
+# ---- 包管理消息 ----
+L[cn,pkg_updating]="正在检查并升级过期的包"
+L[en,pkg_updating]="Checking and updating outdated packages"
+L[cn,pkg_update_done]="所有包已升级到最新版本"
+L[en,pkg_update_done]="All packages updated to latest versions"
+L[cn,pkg_no_outdated]="所有包都是最新的，无需升级"
+L[en,pkg_no_outdated]="All packages are up to date"
+L[cn,pkg_upgrading]="正在升级"
+L[en,pkg_upgrading]="Upgrading"
+L[cn,pkg_list_title]="已安装的包"
+L[en,pkg_list_title]="Installed Packages"
+
+# ---- 备份与还原消息 ----
+L[cn,backup_creating]="正在备份环境"
+L[en,backup_creating]="Backing up environment"
+L[cn,backup_created]="备份完成"
+L[en,backup_created]="Backup completed"
+L[cn,backup_file]="备份文件"
+L[en,backup_file]="Backup file"
+L[cn,backup_list_title]="可用备份列表"
+L[en,backup_list_title]="Available Backups"
+L[cn,backup_empty]="暂无备份文件"
+L[en,backup_empty]="No backup files found"
+L[cn,backup_invalid]="无效的备份文件"
+L[en,backup_invalid]="Invalid backup file"
+L[cn,backup_not_found]="备份文件不存在"
+L[en,backup_not_found]="Backup file not found"
+L[cn,backup_removing]="正在删除备份"
+L[en,backup_removing]="Removing backup"
+L[cn,backup_removed]="备份已删除"
+L[en,backup_removed]="Backup removed"
+L[cn,backup_count]="共 %d 个备份"
+L[en,backup_count]="%d backup(s)"
+L[cn,restore_starting]="正在还原环境"
+L[en,restore_starting]="Restoring environment"
+L[cn,restore_done]="环境还原完成"
+L[en,restore_done]="Environment restored successfully"
+L[cn,restore_env_name]="还原的环境名称"
+L[en,restore_env_name]="Restored environment name"
+
+# ---- 确认提示 ----
+L[cn,confirm_remove]="确定要删除环境 '%s' 吗？此操作不可撤销。"
+L[en,confirm_remove]="Are you sure you want to remove '%s'? This cannot be undone."
+L[cn,confirm_remove_all]="⚠️  警告：即将删除所有 %d 个虚拟环境！"
+L[en,confirm_remove_all]="⚠️  Warning: About to remove all %d virtual environment(s)!"
+L[cn,confirm_remove_backup]="确定要删除备份 '%s' 吗？"
+L[en,confirm_remove_backup]="Are you sure you want to remove backup '%s'?"
+L[cn,confirm_remove_all_backups]="⚠️  警告：即将删除所有 %d 个备份文件！"
+L[en,confirm_remove_all_backups]="⚠️  Warning: About to remove all %d backup file(s)!"
+L[cn,confirm_reset]="确定要重置环境 '%s' 吗？这将删除所有已安装的包（保留 pip）。"
+L[en,confirm_reset]="Reset '%s'? This will remove all installed packages (keeping pip)."
+L[cn,confirm_type_yes]="请输入 'yes' 确认"
+L[en,confirm_type_yes]="Type 'yes' to confirm"
+L[cn,confirm_type_name]="请输入环境名称 '%s' 确认"
+L[en,confirm_type_name]="Type the environment name '%s' to confirm"
+L[cn,confirm_yn]="确认？[y/N]"
+L[en,confirm_yn]="Confirm? [y/N]"
+L[cn,confirm_Yn]="确认？[Y/n]"
+L[en,confirm_Yn]="Confirm? [Y/n]"
+
+# ---- 错误消息 ----
+L[cn,err_no_name]="请指定环境名称"
+L[en,err_no_name]="Please specify an environment name"
+L[cn,err_invalid_name]="无效的环境名称。只能包含字母、数字、下划线和连字符，且不能以连字符开头。"
+L[en,err_invalid_name]="Invalid environment name. Use only letters, numbers, underscores and hyphens. Cannot start with hyphen."
+L[cn,err_no_python]="未找到 Python。请先安装 Python 3。"
+L[en,err_no_python]="Python not found. Please install Python 3 first."
+L[cn,err_python_version]="需要 Python 3.3 或更高版本"
+L[en,err_python_version]="Python 3.3 or higher is required"
+L[cn,err_file_not_found]="文件不存在"
+L[en,err_file_not_found]="File not found"
+L[cn,err_not_tar_gz]="文件必须是 .tar.gz 格式"
+L[en,err_not_tar_gz]="File must be in .tar.gz format"
+L[cn,err_cmd_not_found]="未知命令"
+L[en,err_cmd_not_found]="Unknown command"
+L[cn,err_missing_arg]="缺少必需的参数"
+L[en,err_missing_arg]="Missing required argument"
+L[cn,err_too_many_args]="参数过多"
+L[en,err_too_many_args]="Too many arguments"
+L[cn,err_run_no_cmd]="请指定要运行的命令"
+L[en,err_run_no_cmd]="Please specify a command to run"
+L[cn,err_download_failed]="下载失败，请检查网络连接"
+L[en,err_download_failed]="Download failed. Please check your network connection"
+L[cn,err_no_backup_name]="请指定备份文件名"
+L[en,err_no_backup_name]="Please specify a backup file name"
+L[cn,err_p_no_value]="选项 -p 需要指定 Python 版本或路径"
+L[en,err_p_no_value]="Option -p requires a Python version or path"
+L[cn,err_invalid_alias]="无效的别名。只能包含字母、数字和下划线，且不能以数字开头。"
+L[en,err_invalid_alias]="Invalid alias. Use only letters, numbers and underscores. Cannot start with a number."
+L[cn,err_alias_conflict]="别名 '%s' 与现有命令冲突"
+L[en,err_alias_conflict]="Alias '%s' conflicts with an existing command"
+L[cn,err_alias_is_pyvenv]="不能将别名设置为 'pyvenv'，这是主命令名称"
+L[en,err_alias_is_pyvenv]="Cannot set alias to 'pyvenv', this is the main command name"
+L[cn,err_no_alias]="请指定别名"
+L[en,err_no_alias]="Please specify an alias"
+
+# ---- 别名相关 ----
+L[cn,alias_current]="当前别名"
+L[en,alias_current]="Current alias"
+L[cn,alias_none]="未设置别名"
+L[en,alias_none]="No alias set"
+L[cn,alias_set]="别名已设置为"
+L[en,alias_set]="Alias set to"
+L[cn,alias_removed]="别名已移除"
+L[en,alias_removed]="Alias removed"
+L[cn,alias_same]="别名未改变"
+L[en,alias_same]="Alias unchanged"
+L[cn,alias_reload_hint]="请重新加载 shell 配置或打开新终端使别名生效"
+L[en,alias_reload_hint]="Please reload shell config or open a new terminal to apply the alias"
+L[cn,alias_usage]="用法：pyvenv setalias <别名> 或 pyvenv setalias --remove"
+L[en,alias_usage]="Usage: pyvenv setalias <alias> or pyvenv setalias --remove"
+L[cn,alias_conflict_type_cmd]="外部命令"
+L[en,alias_conflict_type_cmd]="external command"
+L[cn,alias_conflict_type_builtin]="shell 内置命令"
+L[en,alias_conflict_type_builtin]="shell builtin"
+L[cn,alias_conflict_type_func]="shell 函数"
+L[en,alias_conflict_type_func]="shell function"
+L[cn,alias_conflict_type_alias]="shell 别名"
+L[en,alias_conflict_type_alias]="shell alias"
+L[cn,alias_conflict_type_keyword]="shell 关键字"
+L[en,alias_conflict_type_keyword]="shell keyword"
+L[cn,alias_conflict_detail]="'%s' 已存在（类型：%s）"
+L[en,alias_conflict_detail]="'%s' already exists (type: %s)"
+
+# ---- 语言设置 ----
+L[cn,lang_current]="当前语言"
+L[en,lang_current]="Current language"
+L[cn,lang_changed]="语言已切换为"
+L[en,lang_changed]="Language changed to"
+L[cn,lang_cn]="简体中文"
+L[en,lang_cn]="Simplified Chinese"
+L[cn,lang_en]="English"
+L[en,lang_en]="English"
+L[cn,lang_invalid]="无效的语言选项。请使用 'cn'（中文）或 'en'（英文）。"
+L[en,lang_invalid]="Invalid language. Use 'cn' (Chinese) or 'en' (English)."
+
+# ---- 安装与卸载 ----
+L[cn,install_starting]="正在安装 pyvenv..."
+L[en,install_starting]="Installing pyvenv..."
+L[cn,install_downloading]="正在下载脚本..."
+L[en,install_downloading]="Downloading script..."
+L[cn,install_configuring]="正在配置..."
+L[en,install_configuring]="Configuring..."
+L[cn,install_success]="pyvenv 安装成功！"
+L[en,install_success]="pyvenv installed successfully!"
+L[cn,install_ready]="pyvenv 已就绪，现在可以使用了。"
+L[en,install_ready]="pyvenv is ready to use."
+L[cn,install_try_now]="现在可以尝试："
+L[en,install_try_now]="You can now try:"
+L[cn,install_already]="pyvenv 已经安装。如需重新安装，请先卸载。"
+L[en,install_already]="pyvenv is already installed. To reinstall, please uninstall first."
+L[cn,install_force_hint]="或使用 --force 强制重新安装"
+L[en,install_force_hint]="Or use --force to force reinstall"
+L[cn,install_note]="如果命令不可用，请新建终端窗口或手动执行："
+L[en,install_note]="If the command is unavailable, please open a new terminal or run:"
+L[cn,install_alias_prompt]="请输入命令别名（直接回车使用默认值 'pyv'，输入 - 跳过）"
+L[en,install_alias_prompt]="Enter command alias (press Enter for default 'pyv', enter - to skip)"
+L[cn,install_alias_set]="已设置命令别名"
+L[en,install_alias_set]="Command alias set"
+L[cn,install_alias_skipped]="已跳过别名设置"
+L[en,install_alias_skipped]="Alias setup skipped"
+L[cn,install_alias_both]="可以使用 'pyvenv' 或 '%s' 来执行命令"
+L[en,install_alias_both]="You can use either 'pyvenv' or '%s' to run commands"
+
+L[cn,uninstall_title]="卸载 pyvenv"
+L[en,uninstall_title]="Uninstall pyvenv"
+L[cn,uninstall_menu]="请选择卸载方式："
+L[en,uninstall_menu]="Select uninstall option:"
+L[cn,uninstall_opt1]="仅卸载 pyvenv（保留所有虚拟环境）"
+L[en,uninstall_opt1]="Uninstall pyvenv only (keep all environments)"
+L[cn,uninstall_opt2]="完全卸载（删除 pyvenv 和所有虚拟环境）"
+L[en,uninstall_opt2]="Complete uninstall (remove pyvenv and all environments)"
+L[cn,uninstall_opt3]="取消卸载"
+L[en,uninstall_opt3]="Cancel"
+L[cn,uninstall_select]="请输入选项 [1-3]"
+L[en,uninstall_select]="Enter option [1-3]"
+L[cn,uninstall_removing]="正在卸载 pyvenv..."
+L[en,uninstall_removing]="Uninstalling pyvenv..."
+L[cn,uninstall_done]="pyvenv 已卸载"
+L[en,uninstall_done]="pyvenv has been uninstalled"
+L[cn,uninstall_env_kept]="虚拟环境目录已保留"
+L[en,uninstall_env_kept]="Environment directory has been kept"
+L[cn,uninstall_all_removed]="所有文件已清理完毕"
+L[en,uninstall_all_removed]="All files have been removed"
+L[cn,uninstall_hint]="如需重新安装，请运行："
+L[en,uninstall_hint]="To reinstall, run:"
+L[cn,uninstall_complete]="卸载完成。pyvenv 命令已移除。"
+L[en,uninstall_complete]="Uninstall complete. pyvenv command has been removed."
+
+# ---- 帮助信息 ----
+L[cn,help_header]="pyvenv - Python 虚拟环境管理器"
+L[en,help_header]="pyvenv - Python Virtual Environment Manager"
+L[cn,help_usage]="用法：pyvenv <命令> [参数]"
+L[en,help_usage]="Usage: pyvenv <command> [arguments]"
+L[cn,help_commands]="命令列表："
+L[en,help_commands]="Commands:"
+L[cn,help_section_basic]="基础命令"
+L[en,help_section_basic]="Basic Commands"
+L[cn,help_section_manage]="环境管理"
+L[en,help_section_manage]="Environment Management"
+L[cn,help_section_package]="包管理"
+L[en,help_section_package]="Package Management"
+L[cn,help_section_backup]="备份与还原"
+L[en,help_section_backup]="Backup & Restore"
+L[cn,help_section_other]="其他"
+L[en,help_section_other]="Other"
+
+L[cn,help_cmd_list]="列出所有虚拟环境"
+L[en,help_cmd_list]="List all virtual environments"
+L[cn,help_cmd_create]="创建新的虚拟环境（不激活）"
+L[en,help_cmd_create]="Create a new virtual environment (without activating)"
+L[cn,help_cmd_new]="创建并立即激活新环境"
+L[en,help_cmd_new]="Create and immediately activate a new environment"
+L[cn,help_cmd_use]="激活指定的虚拟环境"
+L[en,help_cmd_use]="Activate a virtual environment"
+L[cn,help_cmd_off]="退出当前激活的环境"
+L[en,help_cmd_off]="Deactivate current environment"
+L[cn,help_cmd_rm]="删除指定的虚拟环境"
+L[en,help_cmd_rm]="Remove a virtual environment"
+L[cn,help_cmd_rm_all]="删除所有虚拟环境（需二次确认）"
+L[en,help_cmd_rm_all]="Remove all virtual environments (requires confirmation)"
+L[cn,help_cmd_reset]="重置环境（删除所有包，保留 pip）"
+L[en,help_cmd_reset]="Reset environment (remove all packages, keep pip)"
+L[cn,help_cmd_info]="显示环境的详细信息"
+L[en,help_cmd_info]="Show detailed environment information"
+L[cn,help_cmd_where]="显示环境的完整路径"
+L[en,help_cmd_where]="Show full path of an environment"
+L[cn,help_cmd_run]="在指定环境中运行命令（无需激活）"
+L[en,help_cmd_run]="Run command in an environment (without activating)"
+L[cn,help_cmd_update]="升级当前环境中的所有过期包"
+L[en,help_cmd_update]="Update all outdated packages in current environment"
+L[cn,help_cmd_backup]="备份虚拟环境为 tar.gz 文件"
+L[en,help_cmd_backup]="Backup a virtual environment to tar.gz file"
+L[cn,help_cmd_backups]="列出所有备份文件"
+L[en,help_cmd_backups]="List all backup files"
+L[cn,help_cmd_restore]="从备份文件还原虚拟环境"
+L[en,help_cmd_restore]="Restore a virtual environment from backup"
+L[cn,help_cmd_rm_backup]="删除指定的备份文件"
+L[en,help_cmd_rm_backup]="Remove a backup file"
+L[cn,help_cmd_rm_all_backups]="删除所有备份文件"
+L[en,help_cmd_rm_all_backups]="Remove all backup files"
+L[cn,help_cmd_lang]="设置界面语言（cn/en）"
+L[en,help_cmd_lang]="Set interface language (cn/en)"
+L[cn,help_cmd_setalias]="设置/修改/移除命令别名"
+L[en,help_cmd_setalias]="Set/modify/remove command alias"
+L[cn,help_cmd_uninstall]="卸载 pyvenv"
+L[en,help_cmd_uninstall]="Uninstall pyvenv"
+L[cn,help_cmd_help]="显示此帮助信息"
+L[en,help_cmd_help]="Show this help message"
+L[cn,help_cmd_version]="显示版本信息"
+L[en,help_cmd_version]="Show version information"
+
+L[cn,help_examples]="示例："
+L[en,help_examples]="Examples:"
+L[cn,help_ex_new]="创建并激活名为 myproject 的环境"
+L[en,help_ex_new]="Create and activate an environment named myproject"
+L[cn,help_ex_use]="激活已存在的环境"
+L[en,help_ex_use]="Activate an existing environment"
+L[cn,help_ex_run]="在环境中运行 pip 命令"
+L[en,help_ex_run]="Run pip command in an environment"
+L[cn,help_ex_backup]="备份环境"
+L[en,help_ex_backup]="Backup an environment"
+L[cn,help_ex_python]="使用指定 Python 版本创建环境"
+L[en,help_ex_python]="Create environment with specific Python version"
+L[cn,help_ex_setalias]="设置别名为 pyv"
+L[en,help_ex_setalias]="Set alias to pyv"
+
+L[cn,help_dirs]="目录说明："
+L[en,help_dirs]="Directories:"
+L[cn,help_dir_envs]="虚拟环境存储目录"
+L[en,help_dir_envs]="Virtual environments storage"
+L[cn,help_dir_config]="配置文件目录"
+L[en,help_dir_config]="Configuration directory"
+
+L[cn,help_more]="更多信息请访问："
+L[en,help_more]="For more information, visit:"
+
+L[cn,help_alias_note]="别名"
+L[en,help_alias_note]="Alias"
+
+# ---- 版本信息 ----
+L[cn,version_info]="pyvenv 版本 %s"
+L[en,version_info]="pyvenv version %s"
+L[cn,version_author]="Python 虚拟环境管理器"
+L[en,version_author]="Python Virtual Environment Manager"
+
+# ======================== 版本号 ========================
+PYVENV_VERSION="1.9.0"
+
+# ======================== 颜色与格式 ========================
+if [[ -t 1 ]]; then
+    C_RESET='\033[0m'
+    C_BOLD='\033[1m'
+    C_DIM='\033[2m'
+    C_RED='\033[0;31m'
+    C_GREEN='\033[0;32m'
+    C_YELLOW='\033[0;33m'
+    C_BLUE='\033[0;34m'
+    C_MAGENTA='\033[0;35m'
+    C_CYAN='\033[0;36m'
+    C_WHITE='\033[0;37m'
+else
+    C_RESET='' C_BOLD='' C_DIM=''
+    C_RED='' C_GREEN='' C_YELLOW='' C_BLUE='' C_MAGENTA='' C_CYAN='' C_WHITE=''
+fi
+
+# ======================== 核心函数 ========================
+
+# 获取翻译文本
+_t() {
+    local key="$1"
+    echo "${L[${PYVENV_LANG:-cn},$key]:-$key}"
+}
+
+# 格式化翻译（printf 格式）
+_tf() {
+    local key="$1"; shift
+    # shellcheck disable=SC2059
+    printf "${L[${PYVENV_LANG:-cn},$key]:-$key}" "$@"
+}
+
+# 输出函数
+_echo()    { echo -e "$*"; }
+_success() { echo -e "${C_GREEN}✓${C_RESET} $*"; }
+_error()   { echo -e "${C_RED}✗${C_RESET} $*" >&2; }
+_warn()    { echo -e "${C_YELLOW}!${C_RESET} $*"; }
+_info()    { echo -e "${C_BLUE}→${C_RESET} $*"; }
+_dim()     { echo -e "${C_DIM}$*${C_RESET}"; }
+
+# 加载配置
+_load_config() {
+    PYVENV_LANG="cn"  # 默认中文
+    PYVENV_ALIAS=""   # 默认无别名
+    if [[ -f "$PYVENV_CONFIG" ]]; then
+        # shellcheck source=/dev/null
+        source "$PYVENV_CONFIG" 2>/dev/null || true
+    fi
+    export PYVENV_LANG
+    export PYVENV_ALIAS
+}
+
+# 保存配置
+_save_config() {
+    mkdir -p "$PYVENV_HOME"
+    cat > "$PYVENV_CONFIG" <<EOF
+# pyvenv configuration
+PYVENV_LANG="${PYVENV_LANG:-cn}"
+PYVENV_ALIAS="${PYVENV_ALIAS:-}"
+EOF
+}
+
+# 初始化目录
+_init_dirs() {
+    mkdir -p "$PYVENV_HOME" "$PYVENV_ENV_DIR" "$PYVENV_BACKUP_DIR" 2>/dev/null || true
+}
+
+# 验证环境名称
+_valid_name() {
+    local name="$1"
+    [[ -n "$name" && "$name" =~ ^[a-zA-Z0-9_][a-zA-Z0-9_-]*$ ]]
+}
+
+# 验证别名格式
+_valid_alias_format() {
+    local alias_name="$1"
+    # 别名只能包含字母、数字和下划线，且不能以数字开头
+    [[ -n "$alias_name" && "$alias_name" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]]
+}
+
+# 检查命令是否存在（排除 pyvenv 自己定义的函数）
+# 返回: 0 = 命令存在（冲突），1 = 命令不存在（可用）
+# 输出: 冲突类型描述
+_check_command_exists() {
+    local cmd_name="$1"
+    local cmd_type=""
+    
+    # 如果是当前已设置的别名，允许（相当于重新设置同一个别名）
+    if [[ "$cmd_name" == "${PYVENV_ALIAS:-}" ]]; then
+        return 1
+    fi
+    
+    # 使用 type 命令检查
+    # 需要临时取消别名函数来进行真正的检查
+    local type_output
+    
+    # 先检查是否是外部命令（在 PATH 中）
+    if command -v "$cmd_name" &>/dev/null; then
+        # 获取命令路径
+        local cmd_path
+        cmd_path=$(command -v "$cmd_name" 2>/dev/null)
+        
+        # 排除 pyvenv 脚本本身
+        if [[ "$cmd_path" == "$PYVENV_SCRIPT" ]]; then
+            return 1
+        fi
+        
+        echo "$(_t alias_conflict_type_cmd)"
+        return 0
+    fi
+    
+    # 检查 shell 内置命令
+    if type -t "$cmd_name" 2>/dev/null | grep -q "builtin"; then
+        echo "$(_t alias_conflict_type_builtin)"
+        return 0
+    fi
+    
+    # 检查是否是 shell 关键字
+    if type -t "$cmd_name" 2>/dev/null | grep -q "keyword"; then
+        echo "$(_t alias_conflict_type_keyword)"
+        return 0
+    fi
+    
+    # 检查是否是已存在的 shell 别名（非 pyvenv 创建的）
+    if type -t "$cmd_name" 2>/dev/null | grep -q "alias"; then
+        # 检查是否是 pyvenv 创建的别名
+        local alias_def
+        alias_def=$(alias "$cmd_name" 2>/dev/null || true)
+        if [[ "$alias_def" != *"pyvenv"* ]]; then
+            echo "$(_t alias_conflict_type_alias)"
+            return 0
+        fi
+    fi
+    
+    # 检查是否是函数（排除 pyvenv 和当前别名函数）
+    if type -t "$cmd_name" 2>/dev/null | grep -q "function"; then
+        # 检查函数定义是否包含 pyvenv
+        local func_def
+        func_def=$(declare -f "$cmd_name" 2>/dev/null || true)
+        if [[ "$func_def" != *"pyvenv"* ]]; then
+            echo "$(_t alias_conflict_type_func)"
+            return 0
+        fi
+    fi
+    
+    # 命令不存在，可以使用
+    return 1
+}
+
+# 验证别名（格式 + 冲突检测）
+# 返回: 0 = 有效，1 = 无效
+_valid_alias() {
+    local alias_name="$1"
+    
+    # 检查格式
+    if ! _valid_alias_format "$alias_name"; then
+        _error "$(_t err_invalid_alias)"
+        return 1
+    fi
+    
+    # 不允许设置为 pyvenv
+    if [[ "$alias_name" == "pyvenv" ]]; then
+        _error "$(_t err_alias_is_pyvenv)"
+        return 1
+    fi
+    
+    # 检查命令冲突
+    local conflict_type
+    if conflict_type=$(_check_command_exists "$alias_name"); then
+        _error "$(_tf err_alias_conflict "$alias_name")"
+        _echo "  $(_tf alias_conflict_detail "$alias_name" "$conflict_type")"
+        return 1
+    fi
+    
+    return 0
+}
+
+# 检查环境是否存在
+_env_exists() {
+    [[ -f "$PYVENV_ENV_DIR/$1/bin/activate" ]]
+}
+
+# 获取当前激活的环境名
+_current_env() {
+    [[ -n "${VIRTUAL_ENV:-}" ]] && basename "$VIRTUAL_ENV" || echo ""
+}
+
+# 列出所有环境名
+_list_envs() {
+    local envs=()
+    for d in "$PYVENV_ENV_DIR"/*/; do
+        [[ -f "${d}bin/activate" ]] && envs+=("$(basename "$d")")
+    done
+    printf '%s\n' "${envs[@]}"
+}
+
+# 获取环境数量
+_env_count() {
+    local count=0
+    for d in "$PYVENV_ENV_DIR"/*/; do
+        [[ -f "${d}bin/activate" ]] && ((count++))
+    done
+    echo "$count"
+}
+
+# 获取环境的 Python 版本
+_env_python_ver() {
+    local py="$PYVENV_ENV_DIR/$1/bin/python"
+    [[ -x "$py" ]] && "$py" -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}')" 2>/dev/null || echo "-"
+}
+
+# 获取环境的包数量
+_env_pkg_count() {
+    local pip="$PYVENV_ENV_DIR/$1/bin/pip"
+    [[ -x "$pip" ]] && "$pip" list --format=freeze 2>/dev/null | wc -l | tr -d ' ' || echo "0"
+}
+
+# 获取环境大小
+_env_size() {
+    du -sh "$PYVENV_ENV_DIR/$1" 2>/dev/null | cut -f1 || echo "-"
+}
+
+# 列出所有备份文件
+_list_backups() {
+    for f in "$PYVENV_BACKUP_DIR"/*.tar.gz; do
+        [[ -f "$f" ]] && basename "$f"
+    done
+}
+
+# 获取备份数量
+_backup_count() {
+    local count=0
+    for f in "$PYVENV_BACKUP_DIR"/*.tar.gz; do
+        [[ -f "$f" ]] && ((count++))
+    done
+    echo "$count"
+}
+
+# 确认（y/N）
+_confirm() {
+    local prompt="$1" answer
+    read -rp "$prompt " answer
+    [[ "$answer" =~ ^[Yy]$ ]]
+}
+
+# 确认输入 yes
+_confirm_yes() {
+    local prompt="$1" answer
+    read -rp "$prompt " answer
+    [[ "$answer" == "yes" ]]
+}
+
+# 确认输入指定文本
+_confirm_text() {
+    local expected="$1" prompt="$2" answer
+    read -rp "$prompt " answer
+    [[ "$answer" == "$expected" ]]
+}
+
+# 获取 shell rc 文件
+_get_shell_rc() {
+    case "${SHELL:-/bin/bash}" in
+        */zsh)  echo "${ZDOTDIR:-$HOME}/.zshrc" ;;
+        */bash) echo "$HOME/.bashrc" ;;
+        *)      echo "$HOME/.bashrc" ;;
+    esac
+}
+
+# 清理 rc 文件中过多的连续空行（保留最多1个连续空行）
+_clean_empty_lines() {
+    local file="$1"
+    if [[ -f "$file" ]]; then
+        local tmp_file="${file}.pyvenv.tmp"
+        # 使用 awk 合并连续空行为单个空行，并移除文件末尾的空行
+        awk 'NF {blank=0} !NF {blank++} blank<=1' "$file" > "$tmp_file" && mv "$tmp_file" "$file"
+    fi
+}
+
+# 获取当前使用的命令名（pyvenv 或别名）
+_get_cmd_name() {
+    if [[ -n "${PYVENV_ALIAS:-}" ]]; then
+        echo "$PYVENV_ALIAS"
+    else
+        echo "pyvenv"
+    fi
+}
+
+# 注册别名函数
+_register_alias() {
+    local alias_name="$1"
+    if [[ -n "$alias_name" && "$alias_name" != "pyvenv" ]]; then
+        # 动态创建别名函数
+        eval "${alias_name}() { pyvenv \"\$@\"; }"
+        
+        # 注册自动补全
+        if [[ -n "${BASH_VERSION:-}" ]]; then
+            complete -F _pyvenv_completions "$alias_name" 2>/dev/null
+        elif [[ -n "${ZSH_VERSION:-}" ]]; then
+            complete -F _pyvenv_completions "$alias_name" 2>/dev/null
+        fi
+    fi
+}
+
+# 取消别名函数
+_unregister_alias() {
+    local alias_name="$1"
+    if [[ -n "$alias_name" && "$alias_name" != "pyvenv" ]]; then
+        unset -f "$alias_name" 2>/dev/null || true
+        # 移除自动补全
+        complete -r "$alias_name" 2>/dev/null || true
+    fi
+}
+
+# ======================== Python 解释器解析函数 ========================
+
+# 解析 Python 版本或路径，返回可用的 Python 解释器路径
+# 参数: $1 - 版本号(如 3, 3.12)或完整路径
+# 返回: 0 成功（路径输出到 stdout），1 失败（错误信息输出到 stderr）
+_resolve_python() {
+    local spec="$1"
+    local python_cmd=""
+    
+    # 如果未指定，使用默认 Python
+    if [[ -z "$spec" ]]; then
+        for cmd in python3 python; do
+            if command -v "$cmd" &>/dev/null; then
+                python_cmd="$cmd"
+                break
+            fi
+        done
+        
+        if [[ -z "$python_cmd" ]]; then
+            echo "$(_t err_no_python)" >&2
+            return 1
+        fi
+        
+        echo "$python_cmd"
+        return 0
+    fi
+    
+    # 展开 ~ 和环境变量
+    spec="${spec/#\~/$HOME}"
+    spec=$(eval echo "$spec" 2>/dev/null) || spec="$spec"
+    
+    # 判断是路径还是版本号
+    if [[ "$spec" == */* || "$spec" == .* ]]; then
+        # 这是一个路径
+        if [[ ! -e "$spec" ]]; then
+            echo "$(_t python_path_not_found): $spec" >&2
+            return 1
+        fi
+        
+        if [[ ! -x "$spec" ]]; then
+            echo "$(_t python_not_executable): $spec" >&2
+            return 1
+        fi
+        
+        python_cmd="$spec"
+    else
+        # 这是一个版本号
+        # 检查是否是 Python 2.x
+        if [[ "$spec" == 2 || "$spec" == 2.* ]]; then
+            echo "$(_t python2_not_supported)" >&2
+            return 1
+        fi
+        
+        # 尝试查找对应版本的 Python
+        local tried_cmds=()
+        
+        # 尝试 python3.x 格式
+        if [[ "$spec" =~ ^3\.[0-9]+$ ]]; then
+            tried_cmds+=("python$spec")
+        fi
+        
+        # 尝试 python3 格式（如果只指定了主版本号 3）
+        if [[ "$spec" == "3" ]]; then
+            tried_cmds+=("python3")
+        fi
+        
+        # 通用尝试
+        tried_cmds+=("python$spec")
+        
+        for cmd in "${tried_cmds[@]}"; do
+            if command -v "$cmd" &>/dev/null; then
+                python_cmd="$cmd"
+                break
+            fi
+        done
+        
+        if [[ -z "$python_cmd" ]]; then
+            echo "$(_tf python_version_not_found "$spec")" >&2
+            return 1
+        fi
+    fi
+    
+    # 验证是否是有效的 Python 解释器
+    if ! "$python_cmd" -c "import sys" &>/dev/null; then
+        echo "$(_t python_invalid): $python_cmd" >&2
+        return 1
+    fi
+    
+    # 获取 Python 版本信息
+    local py_version
+    py_version=$("$python_cmd" -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')" 2>/dev/null)
+    
+    if [[ -z "$py_version" ]]; then
+        echo "$(_t python_invalid): $python_cmd" >&2
+        return 1
+    fi
+    
+    # 检查是否是 Python 2.x
+    local major_version
+    major_version=$("$python_cmd" -c "import sys; print(sys.version_info.major)" 2>/dev/null)
+    
+    if [[ "$major_version" == "2" ]]; then
+        echo "$(_t python2_not_supported)" >&2
+        return 1
+    fi
+    
+    # 检查版本是否 >= 3.3（venv 模块需要）
+    local minor_version
+    minor_version=$("$python_cmd" -c "import sys; print(sys.version_info.minor)" 2>/dev/null)
+    
+    if [[ "$major_version" -eq 3 && "$minor_version" -lt 3 ]]; then
+        echo "$(_t python_version_too_old): Python $py_version" >&2
+        return 1
+    fi
+    
+    # 检查是否支持 venv 模块
+    if ! "$python_cmd" -c "import venv" &>/dev/null; then
+        echo "$(_t python_no_venv): $python_cmd" >&2
+        return 1
+    fi
+    
+    echo "$python_cmd"
+    return 0
+}
+
+# 获取 Python 解释器的版本字符串（用于显示）
+_get_python_version() {
+    local python_cmd="$1"
+    "$python_cmd" -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}')" 2>/dev/null || echo "unknown"
+}
+
+# ======================== 命令实现 ========================
+
+# 列出所有环境
+_cmd_list() {
+    local current=$(_current_env)
+    local count=$(_env_count)
+    local cmd_name=$(_get_cmd_name)
+    
+    _echo ""
+    _echo "${C_BOLD}$(_t env_list_title)${C_RESET}  ${C_DIM}$PYVENV_ENV_DIR${C_RESET}"
+    _echo ""
+    
+    if [[ "$count" -eq 0 ]]; then
+        _warn "$(_t env_empty_list)"
+        _echo ""
+        _dim "$(_t tip): $cmd_name new <$(_t name)>"
+        _echo ""
+        return 0
+    fi
+    
+    # 表头
+    printf "  ${C_BOLD}%-22s %-12s %-8s %s${C_RESET}\n" \
+        "$(_t name)" "$(_t python)" "$(_t packages)" "$(_t size)"
+    _echo "  $(printf '%.0s─' {1..56})"
+    
+    while IFS= read -r name; do
+        [[ -z "$name" ]] && continue
+        local marker="" color=""
+        if [[ "$name" == "$current" ]]; then
+            marker=" ${C_GREEN}◀${C_RESET}"
+            color="$C_GREEN"
+        fi
+        printf "  ${color}%-22s${C_RESET} %-12s %-8s %s%b\n" \
+            "$name" "$(_env_python_ver "$name")" "$(_env_pkg_count "$name")" "$(_env_size "$name")" "$marker"
+    done < <(_list_envs)
+    
+    _echo ""
+    _dim "  $(_tf env_count "$count")"
+    _echo ""
+}
+
+# 解析创建环境的参数
+# 设置全局变量: _ENV_NAME, _PYTHON_SPEC
+_parse_create_args() {
+    _ENV_NAME=""
+    _PYTHON_SPEC=""
+    
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            -p|--python)
+                if [[ -z "${2:-}" || "${2:0:1}" == "-" ]]; then
+                    _error "$(_t err_p_no_value)"
+                    return 1
+                fi
+                _PYTHON_SPEC="$2"
+                shift 2
+                ;;
+            -*)
+                _error "$(_t err_cmd_not_found): $1"
+                return 1
+                ;;
+            *)
+                if [[ -z "$_ENV_NAME" ]]; then
+                    _ENV_NAME="$1"
+                else
+                    _error "$(_t err_too_many_args)"
+                    return 1
+                fi
+                shift
+                ;;
+        esac
+    done
+    
+    return 0
+}
+
+# 创建环境（内部实现）
+_do_create_env() {
+    local name="$1"
+    local python_spec="$2"
+    local cmd_name=$(_get_cmd_name)
+    
+    if [[ -z "$name" ]]; then
+        _error "$(_t err_no_name)"
+        _echo "  $(_t usage): $cmd_name create <$(_t name)> [-p $(_t version)|$(_t path)]"
+        return 1
+    fi
+    
+    if ! _valid_name "$name"; then
+        _error "$(_t err_invalid_name)"
+        return 1
+    fi
+    
+    if _env_exists "$name"; then
+        _error "$(_t env_exists): $name"
+        return 1
+    fi
+    
+    # 解析 Python 解释器
+    local python_cmd
+    python_cmd=$(_resolve_python "$python_spec")
+    
+    if [[ $? -ne 0 ]]; then
+        # 错误消息已经在 _resolve_python 中输出
+        return 1
+    fi
+    
+    local py_version
+    py_version=$(_get_python_version "$python_cmd")
+    
+    _info "$(_t env_creating): ${C_CYAN}$name${C_RESET}"
+    _dim "  $(_t env_using_python): $python_cmd ($py_version)"
+    
+    if "$python_cmd" -m venv "$PYVENV_ENV_DIR/$name" 2>/dev/null; then
+        _success "$(_t env_created): ${C_CYAN}$name${C_RESET}"
+        return 0
+    else
+        _error "$(_t env_create_failed)"
+        # 清理可能创建的不完整目录
+        rm -rf "${PYVENV_ENV_DIR:?}/$name" 2>/dev/null
+        return 1
+    fi
+}
+
+# 创建环境
+_cmd_create() {
+    if ! _parse_create_args "$@"; then
+        return 1
+    fi
+    
+    _do_create_env "$_ENV_NAME" "$_PYTHON_SPEC"
+}
+
+# 创建并激活
+_cmd_new() {
+    if ! _parse_create_args "$@"; then
+        return 1
+    fi
+    
+    if _do_create_env "$_ENV_NAME" "$_PYTHON_SPEC"; then
+        _cmd_use "$_ENV_NAME"
+    fi
+}
+
+# 激活环境
+_cmd_use() {
+    local name="$1"
+    local cmd_name=$(_get_cmd_name)
+    
+    if [[ -z "$name" ]]; then
+        _error "$(_t err_no_name)"
+        _echo "  $(_t usage): $cmd_name use <$(_t name)>"
+        return 1
+    fi
+    
+    if ! _env_exists "$name"; then
+        _error "$(_t env_not_found): $name"
+        return 1
+    fi
+    
+    # 先退出当前环境
+    [[ -n "${VIRTUAL_ENV:-}" ]] && deactivate 2>/dev/null
+    
+    # shellcheck source=/dev/null
+    source "$PYVENV_ENV_DIR/$name/bin/activate"
+    _success "$(_t env_activated): ${C_CYAN}$name${C_RESET}"
+}
+
+# 退出环境
+_cmd_off() {
+    if [[ -z "${VIRTUAL_ENV:-}" ]]; then
+        _warn "$(_t env_no_active)"
+        return 0
+    fi
+    
+    local name=$(_current_env)
+    deactivate 2>/dev/null
+    _success "$(_t env_deactivated): ${C_CYAN}$name${C_RESET}"
+}
+
+# 删除环境
+_cmd_rm() {
+    local name="$1"
+    local cmd_name=$(_get_cmd_name)
+    
+    if [[ -z "$name" ]]; then
+        _error "$(_t err_no_name)"
+        _echo "  $(_t usage): $cmd_name rm <$(_t name)>"
+        return 1
+    fi
+    
+    if ! _env_exists "$name"; then
+        _error "$(_t env_not_found): $name"
+        return 1
+    fi
+    
+    _echo ""
+    if ! _confirm "$(_tf confirm_remove "$name") $(_t confirm_yn)"; then
+        _warn "$(_t cancelled)"
+        return 0
+    fi
+    
+    # 如果正在使用，先退出
+    if [[ "${VIRTUAL_ENV:-}" == "$PYVENV_ENV_DIR/$name" ]]; then
+        deactivate 2>/dev/null
+        _dim "  $(_t env_remove_active_hint)"
+    fi
+    
+    rm -rf "${PYVENV_ENV_DIR:?}/$name"
+    _success "$(_t env_removed): ${C_CYAN}$name${C_RESET}"
+}
+
+# 删除所有环境
+_cmd_rm_all() {
+    local count=$(_env_count)
+    
+    if [[ "$count" -eq 0 ]]; then
+        _warn "$(_t env_empty_list)"
+        return 0
+    fi
+    
+    _echo ""
+    _warn "$(_tf confirm_remove_all "$count")"
+    _echo ""
+    
+    while IFS= read -r name; do
+        [[ -n "$name" ]] && _echo "  ${C_RED}•${C_RESET} $name"
+    done < <(_list_envs)
+    
+    _echo ""
+    
+    if ! _confirm_yes "$(_t confirm_type_yes): "; then
+        _warn "$(_t cancelled)"
+        return 0
+    fi
+    
+    # 先退出当前环境
+    [[ -n "${VIRTUAL_ENV:-}" ]] && deactivate 2>/dev/null
+    
+    while IFS= read -r name; do
+        [[ -z "$name" ]] && continue
+        rm -rf "${PYVENV_ENV_DIR:?}/$name"
+        _success "$(_t env_removed): $name"
+    done < <(_list_envs)
+}
+
+# 重置环境
+_cmd_reset() {
+    local name="${1:-$(_current_env)}"
+    local cmd_name=$(_get_cmd_name)
+    
+    if [[ -z "$name" ]]; then
+        _error "$(_t err_no_name)"
+        _echo "  $(_t usage): $cmd_name reset <$(_t name)>"
+        return 1
+    fi
+    
+    if ! _env_exists "$name"; then
+        _error "$(_t env_not_found): $name"
+        return 1
+    fi
+    
+    _echo ""
+    if ! _confirm "$(_tf confirm_reset "$name") $(_t confirm_yn)"; then
+        _warn "$(_t cancelled)"
+        return 0
+    fi
+    
+    _info "$(_t env_resetting): ${C_CYAN}$name${C_RESET}"
+    
+    # 清空 site-packages（保留基础结构）
+    local site_pkgs
+    site_pkgs=$(find "$PYVENV_ENV_DIR/$name/lib" -type d -name "site-packages" 2>/dev/null | head -1)
+    if [[ -n "$site_pkgs" && -d "$site_pkgs" ]]; then
+        find "$site_pkgs" -mindepth 1 -maxdepth 1 ! -name 'pip*' ! -name 'setuptools*' ! -name 'pkg_resources*' ! -name '_distutils_hack*' ! -name 'distutils-precedence.pth' -exec rm -rf {} \; 2>/dev/null
+    fi
+    
+    # 升级 pip
+    "$PYVENV_ENV_DIR/$name/bin/python" -m pip install --upgrade pip -q 2>/dev/null || true
+    
+    _success "$(_t env_reset_done): ${C_CYAN}$name${C_RESET}"
+}
+
+# 显示环境信息
+_cmd_info() {
+    local name="${1:-$(_current_env)}"
+    local cmd_name=$(_get_cmd_name)
+    
+    if [[ -z "$name" ]]; then
+        _error "$(_t err_no_name)"
+        _echo "  $(_t usage): $cmd_name info <$(_t name)>"
+        return 1
+    fi
+    
+    if ! _env_exists "$name"; then
+        _error "$(_t env_not_found): $name"
+        return 1
+    fi
+    
+    local current=$(_current_env)
+    local status_text status_color
+    if [[ "$name" == "$current" ]]; then
+        status_text="$(_t active)"
+        status_color="$C_GREEN"
+    else
+        status_text="$(_t inactive)"
+        status_color="$C_DIM"
+    fi
+    
+    local py_ver=$(_env_python_ver "$name")
+    local pkg_count=$(_env_pkg_count "$name")
+    local env_size=$(_env_size "$name")
+    local env_path="$PYVENV_ENV_DIR/$name"
+    
+    _echo ""
+    _echo "${C_BOLD}$(_t env_info_title)${C_RESET}"
+    _echo "$(printf '%.0s─' {1..45})"
+    _echo ""
+    _echo "  ${C_CYAN}$(_t name):${C_RESET}        $name"
+    _echo "  ${C_CYAN}$(_t status):${C_RESET}      ${status_color}${status_text}${C_RESET}"
+    _echo "  ${C_CYAN}$(_t python):${C_RESET}      $py_ver"
+    _echo "  ${C_CYAN}$(_t packages):${C_RESET}    $pkg_count"
+    _echo "  ${C_CYAN}$(_t size):${C_RESET}        $env_size"
+    _echo "  ${C_CYAN}$(_t path):${C_RESET}        $env_path"
+    _echo ""
+}
+
+# 显示环境路径
+_cmd_where() {
+    local name="${1:-$(_current_env)}"
+    
+    if [[ -z "$name" ]]; then
+        _error "$(_t err_no_name)"
+        return 1
+    fi
+    
+    if ! _env_exists "$name"; then
+        _error "$(_t env_not_found): $name"
+        return 1
+    fi
+    
+    echo "$PYVENV_ENV_DIR/$name"
+}
+
+# 在环境中运行命令
+_cmd_run() {
+    local name="$1"
+    shift || true
+    local cmd_name=$(_get_cmd_name)
+    
+    if [[ -z "$name" ]]; then
+        _error "$(_t err_no_name)"
+        _echo "  $(_t usage): $cmd_name run <$(_t name)> [--] <$(_t command)>"
+        return 1
+    fi
+    
+    # 跳过可选的 --
+    [[ "${1:-}" == "--" ]] && shift
+    
+    if [[ $# -eq 0 ]]; then
+        _error "$(_t err_run_no_cmd)"
+        return 1
+    fi
+    
+    if ! _env_exists "$name"; then
+        _error "$(_t env_not_found): $name"
+        return 1
+    fi
+    
+    local cmd="$1"; shift
+    local bin_path="$PYVENV_ENV_DIR/$name/bin"
+    
+    # 优先使用环境中的命令
+    if [[ -x "$bin_path/$cmd" ]]; then
+        "$bin_path/$cmd" "$@"
+    else
+        PATH="$bin_path:$PATH" "$cmd" "$@"
+    fi
+}
+
+# 升级包
+_cmd_update() {
+    local name=$(_current_env)
+    
+    if [[ -z "$name" ]]; then
+        _error "$(_t env_no_active)"
+        return 1
+    fi
+    
+    local pip_cmd="$PYVENV_ENV_DIR/$name/bin/pip"
+    
+    _info "$(_t pkg_updating)"
+    
+    # 获取过期的包
+    local outdated
+    outdated=$("$pip_cmd" list --outdated --format=json 2>/dev/null | 
+               python3 -c "import sys,json; [print(p['name']) for p in json.load(sys.stdin)]" 2>/dev/null) || true
+    
+    if [[ -z "$outdated" ]]; then
+        _success "$(_t pkg_no_outdated)"
+        return 0
+    fi
+    
+    # 逐个升级
+    while IFS= read -r pkg; do
+        [[ -z "$pkg" ]] && continue
+        _echo "  ${C_BLUE}↑${C_RESET} $(_t pkg_upgrading): $pkg"
+        "$pip_cmd" install -U "$pkg" -q 2>/dev/null || true
+    done <<< "$outdated"
+    
+    _success "$(_t pkg_update_done)"
+}
+
+# 备份环境
+_cmd_backup() {
+    local name="${1:-$(_current_env)}"
+    local cmd_name=$(_get_cmd_name)
+    
+    if [[ -z "$name" ]]; then
+        _error "$(_t err_no_name)"
+        _echo "  $(_t usage): $cmd_name backup <$(_t name)>"
+        return 1
+    fi
+    
+    if ! _env_exists "$name"; then
+        _error "$(_t env_not_found): $name"
+        return 1
+    fi
+    
+    mkdir -p "$PYVENV_BACKUP_DIR"
+    
+    local timestamp=$(date +%Y%m%d_%H%M%S)
+    local backup_file="$PYVENV_BACKUP_DIR/${name}_${timestamp}.tar.gz"
+    
+    _info "$(_t backup_creating): ${C_CYAN}$name${C_RESET}"
+    
+    tar -czf "$backup_file" -C "$PYVENV_ENV_DIR" "$name" 2>/dev/null
+    
+    _success "$(_t backup_created)"
+    _echo "  $(_t backup_file): ${C_DIM}$backup_file${C_RESET}"
+}
+
+# 列出备份
+_cmd_backups() {
+    local count=$(_backup_count)
+    
+    _echo ""
+    _echo "${C_BOLD}$(_t backup_list_title)${C_RESET}  ${C_DIM}$PYVENV_BACKUP_DIR${C_RESET}"
+    _echo ""
+    
+    if [[ "$count" -eq 0 ]]; then
+        _warn "$(_t backup_empty)"
+        _echo ""
+        return 0
+    fi
+    
+    for f in "$PYVENV_BACKUP_DIR"/*.tar.gz; do
+        [[ -f "$f" ]] || continue
+        local fname=$(basename "$f")
+        local fsize=$(du -h "$f" 2>/dev/null | cut -f1)
+        local fdate=$(stat -c %y "$f" 2>/dev/null | cut -d' ' -f1 || stat -f %Sm -t %Y-%m-%d "$f" 2>/dev/null)
+        _echo "  ${C_CYAN}•${C_RESET} $fname  ${C_DIM}($fsize, $fdate)${C_RESET}"
+    done
+    
+    _echo ""
+    _dim "  $(_tf backup_count "$count")"
+    _echo ""
+}
+
+# 删除单个备份
+_cmd_rm_backup() {
+    local backup_name="$1"
+    local cmd_name=$(_get_cmd_name)
+    
+    if [[ -z "$backup_name" ]]; then
+        _error "$(_t err_no_backup_name)"
+        _echo "  $(_t usage): $cmd_name rm-backup <$(_t file)>"
+        return 1
+    fi
+    
+    # 补全 .tar.gz 后缀
+    [[ "$backup_name" != *.tar.gz ]] && backup_name="${backup_name}.tar.gz"
+    
+    local backup_file="$PYVENV_BACKUP_DIR/$backup_name"
+    
+    if [[ ! -f "$backup_file" ]]; then
+        _error "$(_t backup_not_found): $backup_name"
+        return 1
+    fi
+    
+    if ! _confirm "$(_tf confirm_remove_backup "$backup_name") $(_t confirm_yn)"; then
+        _warn "$(_t cancelled)"
+        return 0
+    fi
+    
+    rm -f "$backup_file"
+    _success "$(_t backup_removed): ${C_CYAN}$backup_name${C_RESET}"
+}
+
+# 删除所有备份
+_cmd_rm_all_backups() {
+    local count=$(_backup_count)
+    
+    if [[ "$count" -eq 0 ]]; then
+        _warn "$(_t backup_empty)"
+        return 0
+    fi
+    
+    _echo ""
+    _warn "$(_tf confirm_remove_all_backups "$count")"
+    _echo ""
+    
+    for f in "$PYVENV_BACKUP_DIR"/*.tar.gz; do
+        [[ -f "$f" ]] && _echo "  ${C_RED}•${C_RESET} $(basename "$f")"
+    done
+    
+    _echo ""
+    
+    if ! _confirm_yes "$(_t confirm_type_yes): "; then
+        _warn "$(_t cancelled)"
+        return 0
+    fi
+    
+    for f in "$PYVENV_BACKUP_DIR"/*.tar.gz; do
+        [[ -f "$f" ]] || continue
+        rm -f "$f"
+        _success "$(_t backup_removed): $(basename "$f")"
+    done
+}
+
+# 还原备份
+_cmd_restore() {
+    local backup_file="$1"
+    local cmd_name=$(_get_cmd_name)
+    
+    if [[ -z "$backup_file" ]]; then
+        _error "$(_t err_missing_arg)"
+        _echo "  $(_t usage): $cmd_name restore <$(_t file)>"
+        return 1
+    fi
+    
+    # 补全 .tar.gz 后缀
+    [[ "$backup_file" != *.tar.gz ]] && backup_file="${backup_file}.tar.gz"
+    
+    # 如果只给了文件名，在备份目录中查找
+    if [[ ! -f "$backup_file" && -f "$PYVENV_BACKUP_DIR/$backup_file" ]]; then
+        backup_file="$PYVENV_BACKUP_DIR/$backup_file"
+    fi
+    
+    if [[ ! -f "$backup_file" ]]; then
+        _error "$(_t err_file_not_found): $backup_file"
+        return 1
+    fi
+    
+    if [[ ! "$backup_file" =~ \.tar\.gz$ ]]; then
+        _error "$(_t err_not_tar_gz)"
+        return 1
+    fi
+    
+    # 获取环境名
+    local env_name
+    env_name=$(tar -tzf "$backup_file" 2>/dev/null | head -1 | cut -d/ -f1)
+    
+    if [[ -z "$env_name" ]]; then
+        _error "$(_t backup_invalid)"
+        return 1
+    fi
+    
+    if _env_exists "$env_name"; then
+        _error "$(_t env_exists): $env_name"
+        return 1
+    fi
+    
+    _info "$(_t restore_starting): ${C_CYAN}$env_name${C_RESET}"
+    
+    tar -xzf "$backup_file" -C "$PYVENV_ENV_DIR" 2>/dev/null
+    
+    _success "$(_t restore_done)"
+    _echo "  $(_t restore_env_name): ${C_CYAN}$env_name${C_RESET}"
+}
+
+# 设置语言
+_cmd_lang() {
+    local lang="$1"
+    
+    if [[ -z "$lang" ]]; then
+        _echo "$(_t lang_current): ${C_CYAN}$(_t lang_${PYVENV_LANG})${C_RESET} (${PYVENV_LANG})"
+        return 0
+    fi
+    
+    case "$lang" in
+        cn|zh|chinese)
+            PYVENV_LANG="cn"
+            _save_config
+            _success "$(_t lang_changed): $(_t lang_cn) (cn)"
+            ;;
+        en|english)
+            PYVENV_LANG="en"
+            _save_config
+            _success "$(_t lang_changed): $(_t lang_en) (en)"
+            ;;
+        *)
+            _error "$(_t lang_invalid)"
+            return 1
+            ;;
+    esac
+}
+
+# 设置别名
+_cmd_setalias() {
+    local new_alias="$1"
+    local shell_rc=$(_get_shell_rc)
+    
+    # 无参数：显示当前别名
+    if [[ -z "$new_alias" ]]; then
+        if [[ -n "${PYVENV_ALIAS:-}" ]]; then
+            _echo "$(_t alias_current): ${C_CYAN}${PYVENV_ALIAS}${C_RESET}"
+        else
+            _echo "$(_t alias_current): ${C_DIM}$(_t alias_none)${C_RESET}"
+        fi
+        _echo ""
+        _dim "$(_t alias_usage)"
+        return 0
+    fi
+    
+    # 移除别名
+    if [[ "$new_alias" == "--remove" || "$new_alias" == "-r" || "$new_alias" == "-" ]]; then
+        if [[ -z "${PYVENV_ALIAS:-}" ]]; then
+            _warn "$(_t alias_none)"
+            return 0
+        fi
+        
+        local old_alias="$PYVENV_ALIAS"
+        
+        # 取消旧别名
+        _unregister_alias "$old_alias"
+        
+        # 更新配置
+        PYVENV_ALIAS=""
+        _save_config
+        
+        _success "$(_t alias_removed): ${C_CYAN}$old_alias${C_RESET}"
+        _echo ""
+        _dim "$(_t alias_reload_hint)"
+        _echo "  ${C_DIM}source $shell_rc${C_RESET}"
+        return 0
+    fi
+    
+    # 验证新别名
+    if ! _valid_alias "$new_alias"; then
+        return 1
+    fi
+    
+    # 检查是否与当前别名相同
+    if [[ "$new_alias" == "${PYVENV_ALIAS:-}" ]]; then
+        _warn "$(_t alias_same): ${C_CYAN}$new_alias${C_RESET}"
+        return 0
+    fi
+    
+    local old_alias="${PYVENV_ALIAS:-}"
+    
+    # 取消旧别名（如果有）
+    if [[ -n "$old_alias" ]]; then
+        _unregister_alias "$old_alias"
+    fi
+    
+    # 设置新别名
+    PYVENV_ALIAS="$new_alias"
+    _save_config
+    
+    # 注册新别名
+    _register_alias "$new_alias"
+    
+    _success "$(_t alias_set): ${C_CYAN}$new_alias${C_RESET}"
+    _echo ""
+    _dim "$(_t alias_reload_hint)"
+    _echo "  ${C_DIM}source $shell_rc${C_RESET}"
+}
+
+# 卸载
+_cmd_uninstall() {
+    local count=$(_env_count)
+    local shell_rc=$(_get_shell_rc)
+    
+    _echo ""
+    _echo "${C_BOLD}$(_t uninstall_title)${C_RESET}"
+    _echo "$(printf '%.0s─' {1..45})"
+    _echo ""
+    _echo "$(_t uninstall_menu)"
+    _echo ""
+    _echo "  ${C_CYAN}1)${C_RESET} $(_t uninstall_opt1)"
+    _echo "  ${C_CYAN}2)${C_RESET} $(_t uninstall_opt2)"
+    _echo "  ${C_CYAN}3)${C_RESET} $(_t uninstall_opt3)"
+    _echo ""
+    
+    local choice
+    read -rp "$(_t uninstall_select): " choice
+    
+    case "$choice" in
+        1)
+            _echo ""
+            _info "$(_t uninstall_removing)"
+            _do_uninstall_manager
+            _echo ""
+            _success "$(_t uninstall_done)"
+            _echo "  $(_t uninstall_env_kept): ${C_DIM}$PYVENV_ENV_DIR${C_RESET}"
+            _echo ""
+            _echo "$(_t uninstall_hint)"
+            _echo "  ${C_DIM}curl -fsSL https://raw.githubusercontent.com/eraycc/pyvenv/main/pyvenv.sh | bash -s -- install${C_RESET}"
+            _echo ""
+            _success "$(_t uninstall_complete)"
+            _echo ""
+            # 重新加载 shell 配置
+            # shellcheck source=/dev/null
+            source "$shell_rc" 2>/dev/null || true
+            ;;
+        2)
+            if [[ "$count" -gt 0 ]]; then
+                _echo ""
+                _warn "$(_tf confirm_remove_all "$count")"
+                _echo ""
+            fi
+            
+            if ! _confirm_yes "$(_t confirm_type_yes): "; then
+                _warn "$(_t cancelled)"
+                return 0
+            fi
+            
+            _echo ""
+            _info "$(_t uninstall_removing)"
+            
+            # 先退出环境
+            [[ -n "${VIRTUAL_ENV:-}" ]] && deactivate 2>/dev/null
+            
+            # 删除所有环境
+            rm -rf "$PYVENV_ENV_DIR"
+            
+            _do_uninstall_manager
+            
+            _echo ""
+            _success "$(_t uninstall_done)"
+            _success "$(_t uninstall_all_removed)"
+            _echo ""
+            _echo "$(_t uninstall_hint)"
+            _echo "  ${C_DIM}curl -fsSL https://raw.githubusercontent.com/eraycc/pyvenv/main/pyvenv.sh | bash -s -- install${C_RESET}"
+            _echo ""
+            _success "$(_t uninstall_complete)"
+            _echo ""
+            # 重新加载 shell 配置
+            # shellcheck source=/dev/null
+            source "$shell_rc" 2>/dev/null || true
+            ;;
+        *)
+            _warn "$(_t cancelled)"
+            ;;
+    esac
+}
+
+# 执行卸载管理器
+_do_uninstall_manager() {
+    local shell_rc=$(_get_shell_rc)
+    
+    # 取消别名
+    if [[ -n "${PYVENV_ALIAS:-}" ]]; then
+        _unregister_alias "$PYVENV_ALIAS"
+    fi
+    
+    # 从 rc 文件移除配置行
+    if [[ -f "$shell_rc" ]]; then
+        local tmp_file="${shell_rc}.pyvenv.tmp"
+        # 移除包含 .pyvenv 的行和 pyvenv 注释行
+        grep -v -E '\.pyvenv|^# pyvenv' "$shell_rc" > "$tmp_file" 2>/dev/null && mv "$tmp_file" "$shell_rc"
+        # 清理过多的连续空行
+        _clean_empty_lines "$shell_rc"
+    fi
+    
+    # 删除配置目录
+    rm -rf "$PYVENV_HOME"
+    
+    # 取消函数定义
+    unset -f pyvenv 2>/dev/null || true
+}
+
+# 帮助信息
+_cmd_help() {
+    local cmd_name=$(_get_cmd_name)
+    local alias_info=""
+    
+    # 如果有别名，显示别名信息
+    if [[ -n "${PYVENV_ALIAS:-}" ]]; then
+        alias_info="  ${C_DIM}($(_t help_alias_note): ${PYVENV_ALIAS})${C_RESET}"
+    fi
+    
+    _echo ""
+    _echo "${C_BOLD}$(_t help_header)${C_RESET}  ${C_DIM}v${PYVENV_VERSION}${C_RESET}${alias_info}"
+    _echo ""
+    _echo "$(_t help_usage)"
+    _echo ""
+    _echo "${C_BOLD}$(_t help_commands)${C_RESET}"
+    _echo ""
+    
+    _echo "  ${C_YELLOW}$(_t help_section_basic)${C_RESET}"
+    _echo "    ${C_CYAN}list, ls${C_RESET}                        $(_t help_cmd_list)"
+    _echo "    ${C_CYAN}new, add${C_RESET} <name> [-p ver|path]   $(_t help_cmd_new)"
+    _echo "    ${C_CYAN}use, start, on${C_RESET} <name>           $(_t help_cmd_use)"
+    _echo "    ${C_CYAN}exit, stop, quit, off${C_RESET}           $(_t help_cmd_off)"
+    _echo ""
+    
+    _echo "  ${C_YELLOW}$(_t help_section_manage)${C_RESET}"
+    _echo "    ${C_CYAN}create${C_RESET} <name> [-p ver|path]     $(_t help_cmd_create)"
+    _echo "    ${C_CYAN}rm, remove${C_RESET} <name>               $(_t help_cmd_rm)"
+    _echo "    ${C_CYAN}rm-all${C_RESET}                          $(_t help_cmd_rm_all)"
+    _echo "    ${C_CYAN}reset${C_RESET} [name]                    $(_t help_cmd_reset)"
+    _echo "    ${C_CYAN}info${C_RESET} [name]                     $(_t help_cmd_info)"
+    _echo "    ${C_CYAN}where${C_RESET} [name]                    $(_t help_cmd_where)"
+    _echo "    ${C_CYAN}run${C_RESET} <name> -- <cmd>             $(_t help_cmd_run)"
+    _echo ""
+    
+    _echo "  ${C_YELLOW}$(_t help_section_package)${C_RESET}"
+    _echo "    ${C_CYAN}update, upgrade${C_RESET}                 $(_t help_cmd_update)"
+    _echo ""
+    
+    _echo "  ${C_YELLOW}$(_t help_section_backup)${C_RESET}"
+    _echo "    ${C_CYAN}backup${C_RESET} [name]                   $(_t help_cmd_backup)"
+    _echo "    ${C_CYAN}backups${C_RESET}                         $(_t help_cmd_backups)"
+    _echo "    ${C_CYAN}restore, recover${C_RESET} <file>         $(_t help_cmd_restore)"
+    _echo "    ${C_CYAN}rm-backup${C_RESET} <file>                $(_t help_cmd_rm_backup)"
+    _echo "    ${C_CYAN}rm-all-backups${C_RESET}                  $(_t help_cmd_rm_all_backups)"
+    _echo ""
+    
+    _echo "  ${C_YELLOW}$(_t help_section_other)${C_RESET}"
+    _echo "    ${C_CYAN}lang${C_RESET} [cn|en]                    $(_t help_cmd_lang)"
+    _echo "    ${C_CYAN}setalias${C_RESET} <alias|--remove>       $(_t help_cmd_setalias)"
+    _echo "    ${C_CYAN}uninstall${C_RESET}                       $(_t help_cmd_uninstall)"
+    _echo "    ${C_CYAN}help, -h${C_RESET}                        $(_t help_cmd_help)"
+    _echo "    ${C_CYAN}version, -v${C_RESET}                     $(_t help_cmd_version)"
+    _echo ""
+    
+    _echo "${C_BOLD}$(_t help_examples)${C_RESET}"
+    _echo ""
+    _echo "  ${C_DIM}# $(_t help_ex_new)${C_RESET}"
+    _echo "  $cmd_name new myproject"
+    _echo ""
+    _echo "  ${C_DIM}# $(_t help_ex_python)${C_RESET}"
+    _echo "  $cmd_name new ai -p 3.12"
+    _echo "  $cmd_name new demo -p ~/.pyenv/versions/3.11.6/bin/python"
+    _echo ""
+    _echo "  ${C_DIM}# $(_t help_ex_use)${C_RESET}"
+    _echo "  $cmd_name use myproject"
+    _echo ""
+    _echo "  ${C_DIM}# $(_t help_ex_run)${C_RESET}"
+    _echo "  $cmd_name run myproject -- pip list"
+    _echo ""
+    _echo "  ${C_DIM}# $(_t help_ex_setalias)${C_RESET}"
+    _echo "  pyvenv setalias pyv"
+    _echo ""
+    
+    _echo "${C_BOLD}$(_t help_dirs)${C_RESET}"
+    _echo ""
+    _echo "  ${C_CYAN}~/pyvenv/${C_RESET}        $(_t help_dir_envs)"
+    _echo "  ${C_CYAN}~/.pyvenv/${C_RESET}       $(_t help_dir_config)"
+    _echo ""
+}
+
+# 版本信息
+_cmd_version() {
+    local alias_info=""
+    if [[ -n "${PYVENV_ALIAS:-}" ]]; then
+        alias_info=" ($(_t help_alias_note): ${PYVENV_ALIAS})"
+    fi
+    
+    _echo ""
+    _echo "${C_BOLD}$(_tf version_info "$PYVENV_VERSION")${C_RESET}${alias_info}"
+    _echo "$(_t version_author)"
+    _echo ""
+    _echo "https://github.com/eraycc/pyvenv"
+    _echo ""
+}
+
+# ======================== 安装入口 ========================
+
+_do_install() {
+    local lang="${1:-cn}"
+    local force="${2:-}"
+    
+    # 验证语言
+    [[ "$lang" != "cn" && "$lang" != "en" ]] && lang="cn"
+    PYVENV_LANG="$lang"
+    
+    # 检查是否已安装
+    if [[ -f "$PYVENV_SCRIPT" && "$force" != "--force" ]]; then
+        _echo ""
+        _warn "$(_t install_already)"
+        _echo ""
+        _dim "  $(_t install_force_hint)"
+        _echo ""
+        exit 0
+    fi
+    
+    _echo ""
+    _info "$(_t install_starting)"
+    
+    # 创建目录
+    mkdir -p "$PYVENV_HOME" "$PYVENV_ENV_DIR" "$PYVENV_BACKUP_DIR"
+    
+    # 下载脚本
+    _info "$(_t install_downloading)"
+    local script_url="https://raw.githubusercontent.com/eraycc/pyvenv/main/pyvenv.sh"
+    
+    if ! curl -fsSL "$script_url" -o "$PYVENV_SCRIPT" 2>/dev/null; then
+        _error "$(_t err_download_failed)"
+        exit 1
+    fi
+    
+    chmod +x "$PYVENV_SCRIPT"
+    
+    # 询问别名
+    _echo ""
+    _echo "$(_t install_alias_prompt): "
+    local custom_alias
+    read -rp "[pyv]: " custom_alias
+    
+    # 处理输入
+    if [[ "$custom_alias" == "-" ]]; then
+        # 跳过别名设置
+        PYVENV_ALIAS=""
+        _info "$(_t install_alias_skipped)"
+    elif [[ -z "$custom_alias" ]]; then
+        # 使用默认值 pyv
+        custom_alias="pyv"
+        
+        # 验证默认别名
+        if _valid_alias "$custom_alias"; then
+            PYVENV_ALIAS="$custom_alias"
+        else
+            PYVENV_ALIAS=""
+            _warn "$(_t install_alias_skipped)"
+        fi
+    else
+        # 验证自定义别名
+        if _valid_alias "$custom_alias"; then
+            PYVENV_ALIAS="$custom_alias"
+        else
+            PYVENV_ALIAS=""
+            _warn "$(_t install_alias_skipped)"
+        fi
+    fi
+    
+    # 保存配置
+    _info "$(_t install_configuring)"
+    cat > "$PYVENV_CONFIG" <<EOF
+# pyvenv configuration
+PYVENV_LANG="$lang"
+PYVENV_ALIAS="$PYVENV_ALIAS"
+EOF
+    
+    # 配置 shell rc
+    local shell_rc=$(_get_shell_rc)
+    local source_line='[ -f ~/.pyvenv/pyvenv.sh ] && source ~/.pyvenv/pyvenv.sh'
+    
+    # 移除旧配置（如果有）
+    if [[ -f "$shell_rc" ]]; then
+        grep -v -E '\.pyvenv|^# pyvenv' "$shell_rc" > "${shell_rc}.tmp" 2>/dev/null && mv "${shell_rc}.tmp" "$shell_rc"
+        # 清理过多的连续空行
+        _clean_empty_lines "$shell_rc"
+    fi
+    
+    # 添加新配置
+    {
+        echo ""
+        echo "# pyvenv - Python virtual environment manager"
+        echo "$source_line"
+    } >> "$shell_rc"
+    
+    _echo ""
+    _success "$(_t install_success)"
+    _echo ""
+    
+    if [[ -n "$PYVENV_ALIAS" ]]; then
+        _success "$(_t install_alias_set): ${C_CYAN}$PYVENV_ALIAS${C_RESET}"
+        _echo "  $(_tf install_alias_both "$PYVENV_ALIAS")"
+        _echo ""
+    fi
+    
+    _success "$(_t install_ready)"
+    _echo ""
+    _echo "$(_t install_try_now)"
+    _echo ""
+    _echo "  ${C_CYAN}pyvenv help${C_RESET}"
+    if [[ -n "$PYVENV_ALIAS" ]]; then
+        _echo "  ${C_CYAN}$PYVENV_ALIAS new myenv${C_RESET}"
+    else
+        _echo "  ${C_CYAN}pyvenv new myenv${C_RESET}"
+    fi
+    _echo ""
+    _warn "$(_t install_note)"
+    _echo "  ${C_DIM}source $shell_rc${C_RESET}"
+    _echo ""
+    # 重新加载 shell 配置
+    # shellcheck source=/dev/null
+    source "$shell_rc" 2>/dev/null || true
+}
+
+# curl 卸载入口
+_do_curl_uninstall() {
+    # 尝试加载配置获取语言
+    [[ -f "$PYVENV_CONFIG" ]] && source "$PYVENV_CONFIG" 2>/dev/null
+    PYVENV_LANG="${PYVENV_LANG:-cn}"
+    
+    local shell_rc=$(_get_shell_rc)
+    
+    _echo ""
+    _info "$(_t uninstall_removing)"
+    
+    _do_uninstall_manager
+    
+    _echo ""
+    _success "$(_t uninstall_done)"
+    _echo "  $(_t uninstall_env_kept): ${C_DIM}$PYVENV_ENV_DIR${C_RESET}"
+    _echo ""
+    _success "$(_t uninstall_complete)"
+    _echo ""
+    
+    # 重新加载 shell 配置
+    # shellcheck source=/dev/null
+    source "$shell_rc" 2>/dev/null || true
+}
+
+# ======================== 自动补全 ========================
+
+_pyvenv_completions() {
+    local cur="${COMP_WORDS[COMP_CWORD]}"
+    local prev="${COMP_WORDS[COMP_CWORD-1]}"
+    
+    local commands="list ls new add create use on start workon activate off quit exit stop deactivate rm remove rm-all reset info where run update upgrade backup backups restore recover rm-backup rm-all-backups lang language setalias uninstall help version"
+    
+    if [[ $COMP_CWORD -eq 1 ]]; then
+        COMPREPLY=($(compgen -W "$commands" -- "$cur"))
+        return
+    fi
+    
+    case "$prev" in
+        use|on|rm|remove|info|where|backup|reset|run)
+            local envs=$(_list_envs 2>/dev/null | tr '\n' ' ')
+            COMPREPLY=($(compgen -W "$envs" -- "$cur"))
+            ;;
+        new|add|create)
+            # 支持 -p 选项补全
+            if [[ "$cur" == -* ]]; then
+                COMPREPLY=($(compgen -W "-p --python" -- "$cur"))
+            fi
+            ;;
+        -p|--python)
+            # 补全可用的 Python 版本
+            local pythons=""
+            for cmd in python3 python3.{8..13} python; do
+                command -v "$cmd" &>/dev/null && pythons+="$cmd "
+            done
+            COMPREPLY=($(compgen -W "$pythons" -- "$cur"))
+            ;;
+        lang|language)
+            COMPREPLY=($(compgen -W "cn en" -- "$cur"))
+            ;;
+        setalias)
+            COMPREPLY=($(compgen -W "--remove" -- "$cur"))
+            ;;
+        restore|recover|rm-backup)
+            local backups=$(_list_backups 2>/dev/null | tr '\n' ' ')
+            COMPREPLY=($(compgen -W "$backups" -- "$cur"))
+            ;;
+    esac
+}
+
+# ======================== 主入口 ========================
+
+pyvenv() {
+    local cmd="${1:-help}"
+    shift 2>/dev/null || true
+    
+    case "$cmd" in
+        # 基础命令
+        list|ls)                           _cmd_list ;;
+        new|add)                           _cmd_new "$@" ;;
+        create)                            _cmd_create "$@" ;;
+        use|on|start|activate|workon)            _cmd_use "$@" ;;
+        off|quit|exit|stop|deactivate)          _cmd_off ;;
+        
+        # 环境管理
+        rm|remove|delete)                  _cmd_rm "$@" ;;
+        rm-all|remove-all|delete-all)      _cmd_rm_all ;;
+        reset)                             _cmd_reset "$@" ;;
+        info)                              _cmd_info "$@" ;;
+        where|whereis|path)                _cmd_where "$@" ;;
+        run)                               _cmd_run "$@" ;;
+        
+        # 包管理
+        update|upgrade)                    _cmd_update ;;
+        
+        # 备份还原
+        backup)                            _cmd_backup "$@" ;;
+        backups|backup-list)               _cmd_backups ;;
+        restore|recover)                   _cmd_restore "$@" ;;
+        rm-backup|rm-bak|remove-backup|remove-bak|delete-backup|delete-bak)
+                                           _cmd_rm_backup "$@" ;;
+        rm-all-backups|rm-all-bak|remove-all-backups|remove-all-bak|delete-all-backups|delete-all-bak)
+                                           _cmd_rm_all_backups ;;
+        
+        # 其他
+        lang|language)                     _cmd_lang "$@" ;;
+        setalias|set-alias|alias)          _cmd_setalias "$@" ;;
+        uninstall)                         _cmd_uninstall ;;
+        help|-h|--help)                    _cmd_help ;;
+        version|-v|--version)              _cmd_version ;;
+        
+        *)
+            _error "$(_t err_cmd_not_found): $cmd"
+            _echo ""
+            _echo "$(_t usage): pyvenv help"
+            return 1
+            ;;
+    esac
+}
+
+# ======================== 脚本执行入口 ========================
+
+# 处理 curl 安装/卸载
+if [[ "${1:-}" == "install" ]]; then
+    shift
+    _do_install "$@"
+    exit 0
+elif [[ "${1:-}" == "uninstall" && "${BASH_SOURCE[0]:-}" != "${0:-}" ]]; then
+    _do_curl_uninstall
+    exit 0
+fi
+
+# 正常 source 加载时的初始化
+_init_dirs
+_load_config
+
+# 创建别名函数（如果配置了别名）
+if [[ -n "${PYVENV_ALIAS:-}" && "${PYVENV_ALIAS}" != "pyvenv" ]]; then
+    _register_alias "$PYVENV_ALIAS"
+fi
+
+# 注册自动补全
+if [[ -n "${BASH_VERSION:-}" ]]; then
+    complete -F _pyvenv_completions pyvenv 2>/dev/null
+elif [[ -n "${ZSH_VERSION:-}" ]]; then
+    autoload -Uz compinit && compinit -u 2>/dev/null
+    autoload -Uz bashcompinit && bashcompinit 2>/dev/null
+    complete -F _pyvenv_completions pyvenv 2>/dev/null
+fi
