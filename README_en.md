@@ -2,9 +2,9 @@
 
 A powerful and user-friendly Python virtual environment management tool with multi-language interface and rich environment management features.
 
-![pyvenv Interface Demo](https://github.com/user-attachments/assets/377d5be7-bfd4-4eef-a326-decdf3e51277)
-
 [🌐 Switch to Chinese document / 切换到中文文档](./README.md)
+
+![pyvenv Interface Demo](https://github.com/user-attachments/assets/377d5be7-bfd4-4eef-a326-decdf3e51277)
 
 ## ✨ Features
 
