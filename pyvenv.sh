@@ -1812,7 +1812,18 @@ _do_install() {
     _echo ""
     _echo "$(_t install_alias_prompt): "
     local custom_alias
-    read -rp "[pyv]: " custom_alias
+    
+    # 从终端读取用户输入
+    if [[ -t 0 ]]; then
+        # 标准输入是终端
+        read -rp "[pyv]: " custom_alias
+    elif [[ -e /dev/tty ]]; then
+        # 通过管道执行时，从 /dev/tty 读取
+        read -rp "[pyv]: " custom_alias < /dev/tty
+    else
+        # 无终端可用，使用默认值
+        custom_alias=""
+    fi
     
     # 处理输入
     if [[ "$custom_alias" == "-" ]]; then
