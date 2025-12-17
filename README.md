@@ -2,9 +2,12 @@
 
 一个功能强大、用户友好的 Python 虚拟环境管理工具，支持多语言界面和丰富的环境管理功能。
 
-![pyvenv 界面演示](https://github.com/user-attachments/assets/377d5be7-bfd4-4eef-a326-decdf3e51277)
-
 [🌐 切换到英文文档 / Switch to English Documentation](./README_en.md)
+
+---
+
+## 🎄 演示：
+![pyvenv 界面演示](https://github.com/user-attachments/assets/377d5be7-bfd4-4eef-a326-decdf3e51277)
 
 ## ✨ 特性
 
